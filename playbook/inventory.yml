@@ -1,0 +1,10 @@
+cycIF_DB-server:
+  hosts:
+    10.96.11.102:  # galaxy-ml-1
+      ansible_connection: ssh
+      ansible_user: ubuntu
+      ansible_python_interpreter: python3
+  vars:
+    db_name: cycIF_DB
+    db_owner: cycIF
+  

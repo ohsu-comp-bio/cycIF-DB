@@ -1,0 +1,18 @@
+- hosts: cycIF_DB-server
+  become: yes
+  tasks:
+    - name: Install python
+      raw: apt -y update && apt install -y python-minimal
+      when: check_python.rc != 0
+    - name: Add a user to be db owner
+      user: "{{ db_owner }}"
+      group: users
+    - name: Install postgresql
+      include_role:
+        name: geerlingguy.postgresql
+      vars:
+        postgresql_databases:
+          - name: "{{ db_name }}"
+            owner: "{{ db_owner }}"
+        postgresql_user:
+          - name: "{{ db_owner }}"
