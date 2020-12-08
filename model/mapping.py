@@ -43,14 +43,5 @@ class Cells(Base):
 
 
 
-def init(url):
-    engine = create_engine(url)
+def init(engine):
     Base.metadata.create_all(engine)
-
-    # version control
-    migrate_repo_dir = os.path.join(os.path.dirname(__file__), 'migrate')
-    migrate_repository = repository.Repository(migrate_repo_dir)
-    current_version = migrate_repository.version().version
-    schema.ControlledSchema.create(engine, migrate_repository, version=current_version)
-    db_schema = schema.ControlledSchema(engine, migrate_repository)
-    assert db_schema.version == current_version
