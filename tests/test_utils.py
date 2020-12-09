@@ -1,4 +1,4 @@
-from model.utils import get_configs
+from utils import get_configs
 
 def test_get_configs():
     configs = get_configs()

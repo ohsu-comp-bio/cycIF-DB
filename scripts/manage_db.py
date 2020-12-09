@@ -5,13 +5,13 @@ import yaml
 
 from migrate.versioning.shell import main
 
-
 work_dir = pathlib.Path(__file__).absolute().parent.parent
 
 sys.path.insert(1, str(work_dir))
 
 from model import check
-from model.utils import get_configs
+from utils import get_configs
+
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
