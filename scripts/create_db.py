@@ -6,7 +6,7 @@ import yaml
 from migrate.versioning.shell import main
 
 
-work_dir = pathlib.Path(__file__).parent.parent
+work_dir = pathlib.Path(__file__).absolute().parent.parent
 
 sys.path.insert(1, str(work_dir))
 
