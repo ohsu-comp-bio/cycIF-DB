@@ -7,7 +7,7 @@ import os
 
 from migrate.versioning import repository, schema
 from sqlalchemy import Column, create_engine, ForeignKey, Index, text
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import (
     Boolean,
     DateTime,

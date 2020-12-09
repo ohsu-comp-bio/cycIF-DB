@@ -1,0 +1,2 @@
+db_url: sqlite:///db.sqlite
+auto_migrate: False
