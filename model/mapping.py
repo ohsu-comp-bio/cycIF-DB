@@ -117,8 +117,8 @@ class Cell_Nuclei_Masks(Base):
 
 for mkr in KNOWN_MARKERS['markers']:
     mkr.replace('-', '_')
-    mkr = mkr.upper()
-    setattr(Cell_Cell_Masks, mkr, Column(Numeric(15, 0)))     # Cautious of case sensitivity
+    mkr = mkr.upper()     # Cautious of case sensitivity
+    setattr(Cell_Cell_Masks, mkr, Column(Numeric(15, 0)))
     setattr(Cell_Nuclei_Masks, mkr, Column(Numeric(15, 0)))
 
 
