@@ -34,8 +34,13 @@ class Sample(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
+    cells = relationship('Cell', back_populates='sample')
+    markers = relationship('Sample_Marker_Association', back_populates='sample')
+
     def __repr__(self):
         return "<Sample(name='{}')>".format(self.name)
+
+Index('ix_sample_name', Sample.name, unique=True)
 
 
 class Marker(Base):
@@ -44,32 +49,35 @@ class Marker(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
+    samples = relationship('Sample_Marker_Association', back_populates='marker')
+
     def __repr__(self):
         return "<Marker(name='{}')>".format(self.name)
+
+Index('ix_marker_name', Marker.name, unique=True)
 
 
 class Sample_Marker_Association(Base):
     __tablename__ = 'sample_marker_association'
 
-    id = Column(Integer, primary_key=True)
-    sample_id = Column(Integer, ForeignKey("samples.id"))
-    marker_id = Column(Integer, ForeignKey("markers.id"))
+    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"), primary_key=True)
+    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"), primary_key=True)
     channel_num = Column(Integer)
     cycle_num = Column(Integer)
 
-    sample = relationship("samples", back_populates="markers")
-    marker = relationship("markers", back_populates="samples")
+    sample = relationship("Sample", back_populates="markers")
+    marker = relationship("Marker", back_populates="samples")
 
     def __repr__(self):
         return "<Sample_Marker_Association(sample={}, marker={})>"\
             .format(self.sample, self.marker)
 
 
-class Cells(Base):
+class Cell(Base):
     __tablename__ = 'cells'
 
     id = Column(Integer, primary_key=True)
-    sample_id = Column(Integer, ForeignKey("samples.id"))
+    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"), nullable=False)
 
     sample_cell_id = Column(Integer)     # local experiment ID
     area = Column(Integer)
@@ -84,42 +92,20 @@ class Cells(Base):
     row_centroid  = Column(Numeric(15, 0))
     column_centroid = Column(Numeric(15, 0))
 
-    sample = relationship("samples", back_populates="cells")
+    sample = relationship("Sample", back_populates="cells")
 
     def __repr__(self):
-        return "<Cell(sample={}, cellID={})>"\
+        return "<Cell(sample={}, sample_cell_id={})>"\
             .format(self.sample, self.sample_cell_id)
 
 
-class Cell_Cell_Masks(Base):
-    __tablename__ = 'cell_cell_masks'
-
-    id = Column(Integer, primary_key=True)
-    cell_id = Column(Integer, ForeignKey("cells.id"))
-
-    cell = relationship("cells", back_populates="cell_masks")
-
-    def __repr__(self):
-        return "<Cell_Cell_Masks(Cell={}>".format(self.cell)
-
-
-class Cell_Nuclei_Masks(Base):
-    __tablename__ = 'cell_nuclei_masks'
-
-    id = Column(Integer, primary_key=True)
-    cell_id = Column(Integer, ForeignKey("cells.id"))
-
-    cell = relationship("cells", back_populates="nuclei_masks")
-
-    def __repr__(self):
-        return "<Cell_Nuclei_Masks(Cell={}>".format(self.cell)
-
-
 for mkr in KNOWN_MARKERS['markers']:
-    mkr.replace('-', '_')
-    mkr = mkr.upper()     # Cautious of case sensitivity
-    setattr(Cell_Cell_Masks, mkr, Column(Numeric(15, 0)))
-    setattr(Cell_Nuclei_Masks, mkr, Column(Numeric(15, 0)))
+    mkr = mkr.replace('-', '_')
+    mkr = mkr.replace('.', '_')
+    mkr = mkr.lower()     # Cautious of case sensitivity
+    setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 0)))
+    setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 0)))
+
 
 
 def init(engine):
