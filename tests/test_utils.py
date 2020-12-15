@@ -2,8 +2,8 @@ import json
 import pandas as pd
 import tempfile
 
-from utils import get_configs
-from utils.dataframe import (
+from cycif_db.utils import get_configs
+from cycif_db.utils.dataframe import (
     get_headers_categorized, header_to_dbcolumn,
     header_to_marker, check_feature_compatiblity)
 
@@ -22,7 +22,7 @@ headers = df.columns
 def test_get_configs():
     configs = get_configs()
     assert configs['auto_migrate'] == False
-    assert configs['db_url'] == 'sqlite:///db.sqlite'
+    assert configs['db_url'] == 'sqlite:////tmp/db.sqlite'
 
 
 def test_header_to_dbcolumn():

@@ -4,13 +4,13 @@ import json
 import logging
 import pathlib
 import pandas as pd
-from pandas import DataFrame, Index
+from pandas import DataFrame, Index, Series
 
 
 log = logging.getLogger(__name__)
 
-work_dir = pathlib.Path(__file__).absolute().parent.parent
-PATH_TO_MARKERS = str(pathlib.Path.joinpath(work_dir, 'model', 'markers.json'))
+module = pathlib.Path(__file__).absolute().parent.parent
+PATH_TO_MARKERS = str(pathlib.Path.joinpath(module, 'model', 'markers.json'))
 
 
 def header_to_dbcolumn(st):
@@ -43,7 +43,7 @@ def get_headers_categorized(data, **kwargs):
 
     Arguments
     ---------
-    data: str, DataFrame or pandas Index.
+    data: str, DataFrame or pandas Index/Series.
     kwargs: keywords parameters. 
         Used `pd.read_csv`. Only relevent when data is str.
     """
@@ -52,7 +52,7 @@ def get_headers_categorized(data, **kwargs):
         headers = df.columns
     elif isinstance(data, DataFrame):
         headers = data.columns
-    elif isinstance(data, Index):
+    elif isinstance(data, (Index, Series)):
         headers = data
     else:
         raise ValueError("Unrecognized type for data!")
@@ -71,7 +71,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
 
     Arguments
     ---------
-    data: str, DataFrame or pandas Index.
+    data: str, DataFrame or pandas Index/Series.
     update: bool, default=False.
         Whether to include incompatible markers/features into the marker json
         file, if found.
@@ -90,7 +90,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
         headers = df.columns
     elif isinstance(data, DataFrame):
         headers = data.columns
-    elif isinstance(data, Index):
+    elif isinstance(data, (Index, Series)):
         headers = data
     else:
         raise ValueError("Unrecognized type for data!")
