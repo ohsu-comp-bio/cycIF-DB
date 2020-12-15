@@ -1,7 +1,6 @@
 import logging
 import pathlib
 import sys
-import yaml
 
 from migrate.versioning.shell import main
 

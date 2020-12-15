@@ -29,7 +29,7 @@ def header_to_dbcolumn(st):
 
 
 def header_to_marker(st):
-    """ Map DataFrame header to conventional name of marker 
+    """ Map DataFrame header to conventional name of marker
     """
     if st.lower().endswith(('_nuclei masks')):
         return st[:-13]
@@ -44,7 +44,7 @@ def get_headers_categorized(data, **kwargs):
     Arguments
     ---------
     data: str, DataFrame or pandas Index/Series.
-    kwargs: keywords parameters. 
+    kwargs: keywords parameters.
         Used `pd.read_csv`. Only relevent when data is str.
     """
     if isinstance(data, str):   # file path to the tabu
@@ -57,9 +57,10 @@ def get_headers_categorized(data, **kwargs):
     else:
         raise ValueError("Unrecognized type for data!")
 
-    markers = [x for x in headers \
-        if x.lower().endswith(('_nuclei masks', '_nuclei_masks',
-                               '_cell masks', '_cell_masks'))]
+    markers = [x for x in headers
+               if x.lower().endswith((
+                   '_nuclei masks', '_nuclei_masks',
+                   '_cell masks', '_cell_masks'))]
     others = [x for x in headers if x not in markers]
 
     return markers, others
@@ -67,7 +68,7 @@ def get_headers_categorized(data, **kwargs):
 
 def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
     """ Check whether a cycIF quantification result is compatible
-    with database. 
+    with database.
 
     Arguments
     ---------
@@ -78,7 +79,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
     toplace: None or str, Default=None.
         The path to save the updated marker/feature list. When toplace
         is None, it's the original path + '.new'.
-    kwargs: keywords parameters. 
+    kwargs: keywords parameters.
         Used `pd.read_csv`. Only relevent when data is `str`.
 
     Returns
@@ -101,17 +102,20 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
     with open(PATH_TO_MARKERS, 'r') as fp:
         features_json = json.load(fp)
 
-    cur_markers, cur_others = features_json['markers'], features_json['other_features']
+    cur_markers = features_json['markers']
     cur_markers = [header_to_dbcolumn(x) for x in cur_markers]
+    cur_others = features_json['other_features']
     cur_others = [header_to_dbcolumn(x) for x in cur_others]
 
-    new_markers = [x for x in markers if header_to_dbcolumn(x) not in cur_markers]
-    new_others = [x for x in others if header_to_dbcolumn(x) not in cur_others]
+    new_markers = [x for x in markers
+                   if header_to_dbcolumn(x) not in cur_markers]
+    new_others = [x for x in others
+                  if header_to_dbcolumn(x) not in cur_others]
 
     if not new_markers and not new_others:
         log.info("Found 0 new marker!")
         return True
-    
+
     log.info("Found {} new markers. They are {}.".format(
         len(new_markers), ', '.join(new_markers)))
     log.info("Found {} new non-marker features. They are {}.".format(
@@ -122,7 +126,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
 
     if not toplace:
         toplace = PATH_TO_MARKERS + '.new'
-    
+
     if new_markers:
         new_marker_list = features_json['markers']
         new_marker_list.extend(new_markers)
@@ -130,8 +134,9 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
     if new_others:
         new_other_list = features_json['other_features']
         new_other_list.extend(new_others)
-        features_json['other_features'] = sorted(new_other_list, key=str.casefold)
-        
+        features_json['other_features'] = sorted(new_other_list,
+                                                 key=str.casefold)
+
     with open(toplace, 'w') as fp:
         json.dump(features_json, fp)
     log.info("Marker/Feature list is updated!")

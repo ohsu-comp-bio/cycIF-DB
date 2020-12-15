@@ -43,4 +43,3 @@ def upgrade(engine):
     print(__doc__)
     metadata.bind = engine
     metadata.create_all()
-

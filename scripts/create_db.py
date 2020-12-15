@@ -1,14 +1,9 @@
 import logging
 import pathlib
 import sys
-import yaml
-
-from migrate.versioning.shell import main
 
 work_dir = pathlib.Path(__file__).absolute().parent.parent
-
 sys.path.insert(1, str(work_dir))
-
 from cycif_db.model.check import create_or_verify_database as create_database
 from cycif_db.utils import get_configs
 

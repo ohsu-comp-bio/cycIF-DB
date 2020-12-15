@@ -3,12 +3,7 @@ import os.path
 import sys
 
 from migrate.versioning import repository, schema
-from sqlalchemy import (
-    create_engine,
-    MetaData,
-    Table
-)
-from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database, database_exists
 
 from . import mapping
@@ -28,8 +23,11 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
 
     1) Empty database --> initialize with latest version and return
     2) Database older than migration support --> fail and require manual update
-    3) Database at state where migrate support introduced --> add version control information but make no changes (might still require manual update)
-    4) Database versioned but out of date --> fail with informative message, user must run "sh manage_db.sh upgrade"
+    3) Database at state where migrate support introduced --> add version
+       control information but make no changes (might still require manual
+       update)
+    4) Database versioned but out of date --> fail with informative message,
+       user must run "sh manage_db.sh upgrade"
     """
     # Create the base database if it doesn't yet exist.
     new_database = not database_exists(url)
@@ -44,7 +42,8 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
     def migrate():
         try:
             # Declare the database to be under a repository's version control
-            db_schema = schema.ControlledSchema.create(engine, migrate_repository)
+            db_schema = schema.ControlledSchema.create(engine,
+                                                       migrate_repository)
         except Exception:
             # The database is already under version control
             db_schema = schema.ControlledSchema(engine, migrate_repository)
@@ -55,7 +54,8 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
         log.info("Creating new database from scratch, skipping migrations")
         current_version = migrate_repository.version().version
         mapping.init(engine)
-        schema.ControlledSchema.create(engine, migrate_repository, version=current_version)
+        schema.ControlledSchema.create(engine, migrate_repository,
+                                       version=current_version)
         db_schema = schema.ControlledSchema(engine, migrate_repository)
         assert db_schema.version == current_version
         migrate()
@@ -70,14 +70,20 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
     # manual migrate
     db_schema = schema.ControlledSchema(engine, migrate_repository)
     if migrate_repository.versions.latest != db_schema.version:
-        expect_msg = "Your database has version '%d' but this code expects version '%d'" % (db_schema.version, migrate_repository.versions.latest)
+        expect_msg = "Your database has version '%d' but this code expects "\
+                     "version '%d'" % (db_schema.version,
+                                       migrate_repository.versions.latest)
         instructions = ""
         if db_schema.version > migrate_repository.versions.latest:
-            instructions = "To downgrade the database schema you have to checkout the Galaxy version that you were running previously. "
-            cmd_msg = "sh manage_db.sh downgrade %d" % migrate_repository.versions.latest
+            instructions = "To downgrade the database schema you have to "\
+                           "checkout the Galaxy version that you were running"\
+                           " previously. "
+            cmd_msg = "sh manage_db.sh downgrade %d" \
+                      % migrate_repository.versions.latest
         else:
             cmd_msg = "sh manage_db.sh upgrade"
-        backup_msg = "Please backup your database and then migrate the database schema by running '%s'." % cmd_msg
+        backup_msg = "Please backup your database and then migrate the "\
+                     "database schema by running '%s'." % cmd_msg
         raise Exception(f"{expect_msg}. {instructions}{backup_msg}")
     else:
         log.info("At database version %d" % db_schema.version)
@@ -88,7 +94,8 @@ def migrate_to_current_version(engine, schema):
     try:
         changeset = schema.changeset(None)
     except Exception as e:
-        log.error("Problem determining migration changeset for engine [%s]" % engine)
+        log.error("Problem determining migration changeset for engine [%s]"
+                  % engine)
         raise e
     for ver, change in changeset:
         nextver = ver + changeset.step

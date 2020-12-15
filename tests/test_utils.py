@@ -21,7 +21,7 @@ headers = df.columns
 
 def test_get_configs():
     configs = get_configs()
-    assert configs['auto_migrate'] == False
+    assert configs['auto_migrate'] is False
     assert configs['db_url'] == 'sqlite:////tmp/db.sqlite'
 
 
@@ -34,7 +34,7 @@ def test_header_to_dbcolumn():
 
 
 def test_header_to_marker():
-    new  = headers.map(header_to_marker)
+    new = headers.map(header_to_marker)
 
     assert list(new) == [
         'cellID', 'Area', 'CD45_1', 'DAPI_1'], new
@@ -49,15 +49,15 @@ def test_get_headers_categorized():
 
 def test_check_feature_compatiblity():
     cp = check_feature_compatiblity(df)
-    assert cp == True, cp
+    assert cp is True, cp
 
     mapper = {"DAPI_1_Nuclei Masks": "DAPI_10_Nuclei Masks"}
     new_df = df.rename(columns=mapper, inplace=False)
     cp = check_feature_compatiblity(new_df)
-    assert cp == False, cp
+    assert cp is False, cp
 
     with tempfile.NamedTemporaryFile() as tmp:
         cp = check_feature_compatiblity(new_df, update=True, toplace=tmp.name)
         new_json = json.load(tmp)
 
-    assert 'DAPI_10' in  new_json['markers']
+    assert 'DAPI_10' in new_json['markers']
