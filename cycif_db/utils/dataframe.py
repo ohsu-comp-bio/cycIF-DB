@@ -10,7 +10,7 @@ from pandas import DataFrame, Index, Series
 log = logging.getLogger(__name__)
 
 module = pathlib.Path(__file__).absolute().parent.parent
-PATH_TO_MARKERS = str(pathlib.Path.joinpath(module, 'model', 'markers.json'))
+PATH_TO_MARKERS = str(pathlib.Path.joinpath(module, 'markers.json'))
 
 
 def header_to_dbcolumn(st):
