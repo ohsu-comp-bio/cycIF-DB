@@ -16,7 +16,7 @@ from sqlalchemy.types import (
     Numeric,
     String,
 )
-from ..utils.dataframe import header_to_dbcolumn
+from ..data_frame import header_to_dbcolumn
 
 
 log = logging.getLogger(__name__)
