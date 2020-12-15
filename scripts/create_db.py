@@ -9,8 +9,8 @@ work_dir = pathlib.Path(__file__).absolute().parent.parent
 
 sys.path.insert(1, str(work_dir))
 
-from model.check import create_or_verify_database as create_database
-from utils import get_configs
+from cycif_db.model.check import create_or_verify_database as create_database
+from cycif_db.utils import get_configs
 
 
 logging.basicConfig(level=logging.DEBUG)

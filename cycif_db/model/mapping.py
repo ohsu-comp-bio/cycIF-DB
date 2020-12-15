@@ -17,11 +17,12 @@ from sqlalchemy.types import (
     Numeric,
     String,
 )
+from ..utils.dataframe import header_to_dbcolumn
 
 
 log = logging.getLogger(__name__)
 
-MARKERS_PATH = os.path.join(os.path.dirname(__file__), 'markers.json')
+MARKERS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, 'markers.json')
 with open(MARKERS_PATH, 'r') as fp:
     KNOWN_MARKERS = json.load(fp)
 
@@ -81,16 +82,6 @@ class Cell(Base):
 
     sample_cell_id = Column(Integer)     # local experiment ID
     area = Column(Integer)
-    eccentricity = Column(Numeric(15, 0))
-    extent = Column(Numeric(15, 0))
-    majoraxislength = Column(Numeric(15, 0))
-    minoraxislength = Column(Numeric(15, 0))
-    orientation = Column(Numeric(15, 0))
-    solidity = Column(Numeric(15, 0))
-    x_centroid = Column(Numeric(15, 0))
-    y_centroid = Column(Numeric(15, 0))
-    row_centroid  = Column(Numeric(15, 0))
-    column_centroid = Column(Numeric(15, 0))
 
     sample = relationship("Sample", back_populates="cells")
 
@@ -99,13 +90,17 @@ class Cell(Base):
             .format(self.sample, self.sample_cell_id)
 
 
+for ftr in KNOWN_MARKERS['other_features']:
+    ftr = header_to_dbcolumn(ftr)
+    if ftr in ['sample_cell_id', 'area']:
+        continue
+    setattr(Cell, ftr, Column(Numeric(15, 0)))
+
+
 for mkr in KNOWN_MARKERS['markers']:
-    mkr = mkr.replace('-', '_')
-    mkr = mkr.replace('.', '_')
-    mkr = mkr.lower()     # Cautious of case sensitivity
+    mkr = header_to_dbcolumn(mkr)
     setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 0)))
     setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 0)))
-
 
 
 def init(engine):

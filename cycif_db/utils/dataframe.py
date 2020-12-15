@@ -101,7 +101,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
     with open(PATH_TO_MARKERS, 'r') as fp:
         features_json = json.load(fp)
 
-    cur_markers, cur_others = features_json['markers'], features_json['non_markers']
+    cur_markers, cur_others = features_json['markers'], features_json['other_features']
     cur_markers = [header_to_dbcolumn(x) for x in cur_markers]
     cur_others = [header_to_dbcolumn(x) for x in cur_others]
 
@@ -128,9 +128,9 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
         new_marker_list.extend(new_markers)
         features_json['markers'] = sorted(new_marker_list, key=str.casefold)
     if new_others:
-        new_other_list = features_json['non_markers']
+        new_other_list = features_json['other_features']
         new_other_list.extend(new_others)
-        features_json['non_markers'] = sorted(new_other_list, key=str.casefold)
+        features_json['other_features'] = sorted(new_other_list, key=str.casefold)
         
     with open(toplace, 'w') as fp:
         json.dump(features_json, fp)

@@ -57,7 +57,7 @@
         "Rb",
         "Vimentin"
     ],
-    "non_markers":[
+    "other_features":[
         "Area",
         "CellID",
         "Eccentricity",
