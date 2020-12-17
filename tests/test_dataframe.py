@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import tempfile
 
+from nose.tools import assert_raises
 from cycif_db.data_frame import (
     get_headers_categorized, header_to_dbcolumn,
     header_to_marker, check_feature_compatiblity)
@@ -46,8 +47,7 @@ def test_check_feature_compatiblity():
 
     mapper = {"DAPI_1_Nuclei Masks": "DAPI_10_Nuclei Masks"}
     new_df = df.rename(columns=mapper, inplace=False)
-    cp = check_feature_compatiblity(new_df)
-    assert cp is False, cp
+    assert_raises(ValueError, check_feature_compatiblity, new_df)
 
     with tempfile.NamedTemporaryFile() as tmp:
         cp = check_feature_compatiblity(new_df, update=True, toplace=tmp.name)

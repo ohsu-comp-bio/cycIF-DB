@@ -122,7 +122,8 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
         len(new_others), ', '.join(new_others)))
 
     if not update:
-        return False
+        raise ValueError("The sample cells are not supported by database "
+                         "schema!")
 
     if not toplace:
         toplace = PATH_TO_MARKERS + '.new'
