@@ -20,10 +20,17 @@ def get_configs(conf_file=None):
     return configs
 
 
-def session_maker():
+def engine_maker(url=None, **kw):
+    if not url:
+        url = get_configs()['db_url']
+    engine = create_engine(url, **kw)
+    return engine
+
+
+def session_maker(engine=None, **kwargs):
     """ Provide session object to the wrapped function
     """
-    url = get_configs()['db_url']
-    engine = create_engine(url)
-    Session = sessionmaker(engine)
+    if not engine:
+        engine = engine_maker()
+    Session = sessionmaker(engine, **kwargs)
     return Session()
