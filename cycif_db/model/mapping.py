@@ -65,12 +65,11 @@ Index('ix_marker_name', Marker.name, unique=True)
 class Sample_Marker_Association(Base):
     __tablename__ = 'sample_marker_association'
 
-    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
-                       primary_key=True)
-    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"),
-                       primary_key=True)
-    channel_num = Column(Integer, primary_key=True)
-    cycle_num = Column(Integer)
+    id = Column(Integer, primary_key=True)
+    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"))
+    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"))
+    channel_number = Column(Integer)
+    cycle_number = Column(Integer)
 
     sample = relationship("Sample", back_populates="markers")
     marker = relationship("Marker", back_populates="samples")
@@ -78,6 +77,12 @@ class Sample_Marker_Association(Base):
     def __repr__(self):
         return "<Sample_Marker_Association(sample={}, marker={})>"\
             .format(self.sample, self.marker)
+
+
+Index('ix_sample_marker_associate',
+      Sample_Marker_Association.sample_id,
+      Sample_Marker_Association.marker_id,
+      Sample_Marker_Association.channel_number, unique=True)
 
 
 class Cell(Base):
