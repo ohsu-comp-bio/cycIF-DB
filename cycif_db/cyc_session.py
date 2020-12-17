@@ -73,17 +73,7 @@ class CycSession(Session):
         elif not isinstance(cells, DataFrame):
             raise ValueError("Unsupported datatype for cells!")
 
-        if isinstance(sample, Sample):
-            sample_id = sample.id
-            assert sample_id
-        elif isinstance(sample, str):
-            sample_id = self.query(Sample.id).filter(
-                func.lower(Sample.name) == sample.lower()).first()
-            assert sample_id, (f"A Sample that matches `{sample}` doesn't seem"
-                               " to exist in database!")
-            sample_id = sample_id[0]
-        else:
-            raise ValueError("Unsupported datatype for sample.")
+        sample_id = self.get_sample_id(sample)
 
         cells.columns = cells.columns.map(header_to_dbcolumn)
         cell_obs = cells.to_dict('records')
@@ -135,15 +125,7 @@ class CycSession(Session):
         elif not isinstance(markers, DataFrame):
             raise ValueError("Unsupported datatype for markers!")
 
-        if isinstance(sample, Sample):
-            sample_id = sample.id
-        elif isinstance(sample, str):
-            sample_id = self.query(Sample.id).filter_by(name=sample).first()
-            assert sample_id, (f"A Sample that matches `{sample}` doesn't seem"
-                               " to exist in database!")
-            sample_id = sample_id[0]
-        else:
-            raise ValueError("Unsupported datatype for sample.")
+        sample_id = self.get_sample_id(sample)
 
         associates = []
         for i, row in markers.iterrows():
@@ -240,6 +222,28 @@ class CycSession(Session):
             func.lower(Sample.name) == sample_name.lower()).first()
         return sample
 
+    def get_sample_id(self, sample):
+        """ Get unique sample ID in database.
+
+        Parameters
+        ----------
+        sample: str or Sample object.
+            If str, it's the unique name of the object.
+        """
+        if isinstance(sample, Sample):
+            sample_id = sample.id
+            assert sample_id
+        elif isinstance(sample, str):
+            sample_id = self.query(Sample.id).filter(
+                func.lower(Sample.name) == sample.lower()).first()
+            assert sample_id, (f"The name `{sample}` didn't mathch"
+                               " any Sample object in database!")
+            sample_id = sample_id[0]
+        else:
+            raise ValueError("Unsupported datatype for sample.")
+
+        return sample_id
+
     def get_marker_by_name(self, marker_name):
         """ Query markers by name.
 
@@ -256,3 +260,23 @@ class CycSession(Session):
         marker = self.query(Marker).filter(
             func.lower(Marker.name) == marker_name.lower()).first()
         return marker
+
+    def list_samples(self):
+        """ List all the samples stored in database.
+
+        Returns
+        -------
+        List of Sample objects or None.
+        """
+        sample_list = self.query(Sample).all()
+        return sample_list
+
+    def list_markers(self):
+        """ List all the markers stored in database.
+
+        Returns
+        -------
+        List of Marker objects or None.
+        """
+        marker_list = self.query(Marker).all()
+        return marker_list
