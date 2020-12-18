@@ -93,7 +93,6 @@ class Cell(Base):
                        nullable=False)
 
     sample_cell_id = Column(Integer)     # local experiment ID
-    area = Column(Integer)
 
     sample = relationship("Sample", back_populates="cells")
 
@@ -104,7 +103,7 @@ class Cell(Base):
 
 for ftr in KNOWN_MARKERS['other_features']:
     ftr = header_to_dbcolumn(ftr)
-    if ftr in ['sample_cell_id', 'area']:
+    if ftr == 'sample_cell_id':
         continue
     setattr(Cell, ftr, Column(Numeric(15, 0)))
 

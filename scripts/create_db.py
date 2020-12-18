@@ -2,22 +2,23 @@ import logging
 import pathlib
 import sys
 
-work_dir = pathlib.Path(__file__).absolute().parent.parent
-sys.path.insert(1, str(work_dir))
-from cycif_db.model.check import create_or_verify_database as create_database
-from cycif_db.utils import get_configs
+module_path = pathlib.Path(__file__).absolute().parent.parent
+sys.path.insert(1, str(module_path))
+
+from cycif_db.model import create_db
 
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-def invoke_create():
-    configs = get_configs()
-    db_url = configs['db_url']
-
-    create_database(db_url)
+def invoke_create(url):
+    create_db(url)
 
 
 if __name__ == "__main__":
-    invoke_create()
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    else:
+        url = None
+    invoke_create(url)

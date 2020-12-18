@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database, database_exists
 
 from . import mapping
+from ..utils import get_configs
+
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ migrate_repo_dir = os.path.join(os.path.dirname(__file__), 'migrate')
 migrate_repository = repository.Repository(migrate_repo_dir)
 
 
-def create_or_verify_database(url, engine_options={}, auto_migrate=False):
+def create_or_verify_database(url=None, engine_options={}, auto_migrate=None):
     """
     Check that the database is use-able, possibly creating it if empty (this is
     the only time we automatically create tables, otherwise we force the
@@ -29,6 +31,12 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
     4) Database versioned but out of date --> fail with informative message,
        user must run "sh manage_db.sh upgrade"
     """
+    configs = get_configs()
+    if url is None:
+        url = configs['db_url']
+    if auto_migrate is None:
+        auto_migrate = configs['auto_migrate']
+
     # Create the base database if it doesn't yet exist.
     new_database = not database_exists(url)
     if new_database:
@@ -87,6 +95,9 @@ def create_or_verify_database(url, engine_options={}, auto_migrate=False):
         raise Exception(f"{expect_msg}. {instructions}{backup_msg}")
     else:
         log.info("At database version %d" % db_schema.version)
+
+
+create_db = create_or_verify_database
 
 
 def migrate_to_current_version(engine, schema):
