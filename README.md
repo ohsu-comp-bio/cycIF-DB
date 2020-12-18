@@ -1,3 +1,3 @@
 # cycIF-DB
 
-This library provides postgresql schema settings and access utilities for cycIF quantifications.
+This library provides simple APIs to manage cycIF quantification data.
