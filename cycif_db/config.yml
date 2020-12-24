@@ -1,2 +1,3 @@
-db_url: sqlite:////tmp/db.sqlite
-auto_migrate: False
+#db_url: sqlite:////tmp/db.sqlite
+db_url: postgresql+psycopg2://cycif:cycif@cycifdb.ohsu.edu:5432/cycif
+auto_migrate: False 

@@ -5,7 +5,6 @@ cycIF_DB-server:
       ansible_user: ubuntu
       ansible_python_interpreter: python3
   vars:
-    db_owner: cycIF
-    db_user: cycIF_user
-    db_name: cycIF_DB
+    db_owner: cycif
+    db_user: cycif_user
   

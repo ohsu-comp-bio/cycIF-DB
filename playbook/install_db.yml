@@ -17,18 +17,12 @@
       include_role:
         name: geerlingguy.postgresql
       vars:
-        postgresql_databases:
-          - name: "{{ db_owner }}"
-            owner: "{{ db_owner }}"
         postgresql_users:
           - name: "{{ db_owner }}"
             password: "{{ db_owner }}"
             role_attr_flags: CREATEDB
           - name: "{{ db_user }}"
             password: "{{ db_user }}"
-            priv: CONNECT/TEMP
-            db: "{{ db_name }}"
-            role_attr_flags: NOSUPERUSER
         postgresql_python_library: python3-psycopg2
         postgresql_global_config_options:
           - option: listen_addresses
@@ -40,14 +34,14 @@
             - { type: local, database: all, user: all, auth_method: peer }
             - { type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: md5 }
             - { type: host, database: all, user: all, address: '::1/128', auth_method: md5 }
-            - { type: host, database: "{{ db_name }}", user: "{{ db_user }}", address: '0.0.0.0/0', auth_method: md5 }
-            - { type: host, database: "{{ db_name }}", user: "{{ db_user }}", address: '::0/0', auth_method: md5 }
-        postgres_users_no_log: false
-    - name: Give privileges to user
-      become: yes
-      become_user: postgres
-      postgresql_privs:
-        db: "{{ db_name }}"
-        role: "{{ db_user }}"
-        objs: ALL_IN_SCHEMA
-        privs: SELECT
+            - { type: host, database: "{{ db_owner }}", user: "{{ db_user }}", address: '0.0.0.0/0', auth_method: md5 }
+            - { type: host, database: "{{ db_owner }}", user: "{{ db_user }}", address: '::0/0', auth_method: md5 }
+        # postgres_users_no_log: false
+    # - name: Give privileges to user
+    #   become: yes
+    #   become_user: postgres
+    #   postgresql_privs:
+    #     db: "{{ db_owner }}"
+    #     role: "{{ db_user }}"
+    #     objs: ALL_IN_SCHEMA
+    #     privs: SELECT
