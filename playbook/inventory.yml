@@ -1,10 +1,11 @@
 cycIF_DB-server:
   hosts:
-    10.96.11.245:  # cycIF-DB
+    10.96.11.115:  # cycIF-DB
       ansible_connection: ssh
       ansible_user: ubuntu
       ansible_python_interpreter: python3
   vars:
-    db_name: cycIF_DB
     db_owner: cycIF
+    db_user: cycIF_user
+    db_name: cycIF_DB
   
