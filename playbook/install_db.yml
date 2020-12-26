@@ -17,6 +17,9 @@
       include_role:
         name: geerlingguy.postgresql
       vars:
+        postgresql_databases:
+          - name: "{{ db_name }}"
+            owner: "{{ db_owner }}"
         postgresql_users:
           - name: "{{ db_owner }}"
             password: "{{ db_owner }}"
@@ -34,14 +37,14 @@
             - { type: local, database: all, user: all, auth_method: peer }
             - { type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: md5 }
             - { type: host, database: all, user: all, address: '::1/128', auth_method: md5 }
-            - { type: host, database: "{{ db_owner }}", user: "{{ db_user }}", address: '0.0.0.0/0', auth_method: md5 }
-            - { type: host, database: "{{ db_owner }}", user: "{{ db_user }}", address: '::0/0', auth_method: md5 }
+            - { type: host, database: "{{ db_name }}", user: "{{ db_user }}", address: '0.0.0.0/0', auth_method: md5 }
+            - { type: host, database: "{{ db_name }}", user: "{{ db_user }}", address: '::0/0', auth_method: md5 }
         # postgres_users_no_log: false
     # - name: Give privileges to user
     #   become: yes
     #   become_user: postgres
     #   postgresql_privs:
-    #     db: "{{ db_owner }}"
+    #     db: "{{ db_name }}"
     #     role: "{{ db_user }}"
     #     objs: ALL_IN_SCHEMA
     #     privs: SELECT

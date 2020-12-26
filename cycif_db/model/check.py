@@ -37,15 +37,19 @@ def create_or_verify_database(url=None, engine_options={}, auto_migrate=None):
     if auto_migrate is None:
         auto_migrate = configs['auto_migrate']
 
-    # Create the base database if it doesn't yet exist.
-    new_database = not database_exists(url)
-    if new_database:
+    new_database = False
+
+    if not database_exists(url):
+        new_database = True
         message = "Creating database for URI [%s]" % url
         log.info(message)
         create_database(url)
 
     # Create engine and metadata
     engine = create_engine(url, **engine_options)
+
+    if not engine.table_names():
+        new_database = True
 
     def migrate():
         try:
