@@ -29,9 +29,11 @@ class CycSession(Session):
             bind = engine
         super(CycSession, self).__init__(bind=bind, **kwargs)
 
-    @property
-    def url(self):
-        return self.session.bind.url
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type_, value, traceback):
+        self.close()
 
     ######################################################
     #              Data Entry
