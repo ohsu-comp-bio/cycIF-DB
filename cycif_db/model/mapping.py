@@ -6,6 +6,7 @@ import json
 import logging
 import os
 
+from datetime import datetime
 from sqlalchemy import Column, create_engine, ForeignKey, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -34,6 +35,7 @@ class Sample(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    entry_at = Column(DateTime, default=datetime.utcnow)
 
     cells = relationship('Cell', back_populates='sample')
     markers = relationship('Sample_Marker_Association',
@@ -51,6 +53,7 @@ class Marker(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    entry_at = Column(DateTime, default=datetime.utcnow)
 
     samples = relationship('Sample_Marker_Association',
                            back_populates='marker')
@@ -70,6 +73,7 @@ class Sample_Marker_Association(Base):
     marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"))
     channel_number = Column(Integer)
     cycle_number = Column(Integer)
+    entry_at = Column(DateTime, default=datetime.utcnow)
 
     sample = relationship("Sample", back_populates="markers")
     marker = relationship("Marker", back_populates="samples")
@@ -91,6 +95,7 @@ class Cell(Base):
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
                        nullable=False)
+    entry_at = Column(DateTime, default=datetime.utcnow)
 
     sample_cell_id = Column(Integer)     # local experiment ID
 
