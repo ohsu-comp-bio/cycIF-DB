@@ -110,13 +110,13 @@ for ftr in KNOWN_MARKERS['other_features']:
     ftr = header_to_dbcolumn(ftr)
     if ftr == 'sample_cell_id':
         continue
-    setattr(Cell, ftr, Column(Numeric(15, 0)))
+    setattr(Cell, ftr, Column(Numeric(15, 4)))
 
 
 for mkr in KNOWN_MARKERS['markers']:
     mkr = header_to_dbcolumn(mkr)
-    setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 0)))
-    setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 0)))
+    setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 4)))
+    setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 4)))
 
 
 def init(engine):
