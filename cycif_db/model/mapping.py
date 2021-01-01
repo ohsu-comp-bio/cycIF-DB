@@ -34,7 +34,7 @@ class Sample(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    entry_at = Column(DateTime, server_default=func.now())
+    entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     cells = relationship('Cell', back_populates='sample')
     markers = relationship('Sample_Marker_Association',
@@ -52,7 +52,7 @@ class Marker(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    entry_at = Column(DateTime, server_default=func.now())
+    entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     samples = relationship('Sample_Marker_Association',
                            back_populates='marker')
@@ -72,7 +72,7 @@ class Sample_Marker_Association(Base):
     marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"))
     channel_number = Column(Integer)
     cycle_number = Column(Integer)
-    entry_at = Column(DateTime, server_default=func.now())
+    entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample = relationship("Sample", back_populates="markers")
     marker = relationship("Marker", back_populates="samples")
@@ -94,7 +94,7 @@ class Cell(Base):
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
                        nullable=False)
-    entry_at = Column(DateTime, server_default=func.now())
+    entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample_cell_id = Column(Integer)     # local experiment ID
 
