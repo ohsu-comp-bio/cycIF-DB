@@ -2,6 +2,9 @@ import logging
 import os.path
 import sys
 
+from alembic import command, config
+from alembic.script import ScriptDirectory
+from alembic.migration import MigrationContext
 from migrate.versioning import repository, schema
 from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database, database_exists
@@ -15,6 +18,9 @@ log = logging.getLogger(__name__)
 # path relative to galaxy
 migrate_repo_dir = os.path.join(os.path.dirname(__file__), 'migrate')
 migrate_repository = repository.Repository(migrate_repo_dir)
+
+alembic_cfg_file = os.path.join(
+    os.path.dirname(__file__), os.pardir, os.pardir, 'alembic.ini')
 
 
 def create_or_verify_database(url=None, engine_options={}, auto_migrate=None):
@@ -48,7 +54,7 @@ def create_or_verify_database(url=None, engine_options={}, auto_migrate=None):
     # Create engine and metadata
     engine = create_engine(url, **engine_options)
 
-    if not engine.table_names():
+    if len(engine.table_names()) < 2:
         new_database = True
 
     def migrate():
@@ -101,9 +107,6 @@ def create_or_verify_database(url=None, engine_options={}, auto_migrate=None):
         log.info("At database version %d" % db_schema.version)
 
 
-create_db = create_or_verify_database
-
-
 def migrate_to_current_version(engine, schema):
     # Changes to get to current version
     try:
@@ -133,3 +136,63 @@ def migrate_to_current_version(engine, schema):
             for message in "".join(sys.stdout.buffer).split("\n"):
                 log.info(message)
             sys.stdout = old_stdout
+
+
+def create_db(url=None, engine_options={}, auto_migrate=None):
+    """ Create database using alembic APIs
+    """
+    configs = get_configs()
+    if url is None:
+        url = configs['db_url']
+    if auto_migrate is None:
+        auto_migrate = configs['auto_migrate']
+
+    new_database = False
+
+    if not database_exists(url):
+        new_database = True
+        message = "Creating database for URI [%s]" % url
+        log.info(message)
+        create_database(url)
+
+    # Create engine and metadata
+    engine = create_engine(url, **engine_options)
+
+    if len(engine.table_names()) < 2:
+        new_database = True
+
+    alembic_cfg = config.Config(alembic_cfg_file)
+
+    def migrate_to_head():
+        with engine.begin() as connection:
+            alembic_cfg.attributes['connection'] = connection
+            command.upgrade(alembic_cfg, 'head')
+
+    def migrate_from_scratch():
+        log.info("Creating new database from scratch, skipping migrations")
+        mapping.init(engine)
+        command.stamp(alembic_cfg, 'head')
+
+    if new_database:
+        migrate_from_scratch()
+    elif auto_migrate:
+        migrate_to_head()
+
+    script = ScriptDirectory.from_config(alembic_cfg)
+    script_head = script.get_current_head()
+    with engine.connect() as conn:
+        context = MigrationContext.configure(conn)
+        current_version = context.get_current_revision()
+
+    if script_head == current_version:
+        log.info("At database version %s" % current_version)
+        return
+    expect_msg = "Your database has reversion '%s' but this code expects "\
+                 "version '%s'" % (current_version, script_head)
+    if int(current_version) > int(script_head):
+        cmd_msg = "alembic downgrade %s" % script_head
+    else:
+        cmd_msg = "alembic upgrade head"
+    backup_msg = "Please backup your database and then migrate the "\
+                 "database schema by running '%s'." % cmd_msg
+    raise Exception(f"{expect_msg}. {backup_msg}")
