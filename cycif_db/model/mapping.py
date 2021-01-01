@@ -94,9 +94,8 @@ class Cell(Base):
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
                        nullable=False)
-    entry_at = Column(DateTime(timezone=True), server_default=func.now())
-
     sample_cell_id = Column(Integer)     # local experiment ID
+    entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample = relationship("Sample", back_populates="cells")
 

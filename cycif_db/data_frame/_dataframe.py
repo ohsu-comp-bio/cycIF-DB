@@ -113,7 +113,7 @@ def check_feature_compatiblity(data, update=False, toplace=None, **kwargs):
                   if header_to_dbcolumn(x) not in cur_others]
 
     if not new_markers and not new_others:
-        log.info("The sample complex is compatible with database schema!")
+        log.info("Check DB schema compatibility: Succeed!")
         return True
 
     log.info("Found {} new markers. They are {}.".format(
