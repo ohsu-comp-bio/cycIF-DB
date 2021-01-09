@@ -6,7 +6,7 @@ import pandas as pd
 from pandas import DataFrame
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from .data_frame import header_to_dbcolumn, check_feature_compatiblity
+from .data_frame import CycDataFrame
 from .model import Cell, Marker, Sample, Sample_Marker_Association
 from .utils import engine_maker
 
@@ -28,6 +28,7 @@ class CycSession(Session):
             engine = engine_maker()
             bind = engine
         super(CycSession, self).__init__(bind=bind, **kwargs)
+        self.data_frame = CycDataFrame()
 
     def __enter__(self):
         return self
@@ -77,7 +78,7 @@ class CycSession(Session):
 
         sample_id = self.get_sample_id(sample)
 
-        cells.columns = cells.columns.map(header_to_dbcolumn)
+        cells.columns = cells.columns.map(self.data_frame.header_to_dbcolumn)
         cell_obs = cells.to_dict('records')
         for ob in cell_obs:
             ob['sample_id'] = sample_id
@@ -162,8 +163,8 @@ class CycSession(Session):
         kwargs: keywords parameter.
             Addtional parameters used `pd.read_csv`.
         """
-        # check schema compatibility
-        check_feature_compatiblity(cells)
+        # check schema compatibility and marker consistency
+        self.data_frame.check_feature_compatibility(cells, markers)
 
         try:
             if not isinstance(sample, Sample):

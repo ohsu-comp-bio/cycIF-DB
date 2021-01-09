@@ -4,8 +4,9 @@ import tempfile
 
 from nose.tools import assert_raises
 from cycif_db.data_frame import (
-    get_headers_categorized, header_to_dbcolumn,
-    header_to_marker, check_feature_compatiblity)
+    CycDataFrame,
+    get_headers_categorized,
+    header_to_marker)
 
 
 data = {
@@ -20,7 +21,7 @@ headers = df.columns
 
 
 def test_header_to_dbcolumn():
-    new = headers.map(header_to_dbcolumn)
+    new = headers.map(CycDataFrame().header_to_dbcolumn)
 
     assert list(new) == [
         'sample_cell_id', 'area', 'cd45_1__cell_masks',
@@ -41,16 +42,13 @@ def test_get_headers_categorized():
     assert others == ['cellID', 'Area'], others
 
 
-def test_check_feature_compatiblity():
-    cp = check_feature_compatiblity(df)
-    assert cp is True, cp
+def test_check_feature_compatibility():
+    data_frame = CycDataFrame()
+    m_markers = pd.Series(['CD45', 'DAPI'])
+    cp = data_frame.check_feature_compatibility(df, m_markers)
+    assert cp is None
 
     mapper = {"DAPI_1_Nuclei Masks": "DAPI_10_Nuclei Masks"}
     new_df = df.rename(columns=mapper, inplace=False)
-    assert_raises(ValueError, check_feature_compatiblity, new_df)
-
-    with tempfile.NamedTemporaryFile() as tmp:
-        cp = check_feature_compatiblity(new_df, update=True, toplace=tmp.name)
-        new_json = json.load(tmp)
-
-    assert 'DAPI_10' in new_json['markers']
+    assert_raises(ValueError, data_frame.check_feature_compatibility,
+                  new_df, m_markers)

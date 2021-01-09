@@ -16,13 +16,14 @@ from sqlalchemy.types import (
     Numeric,
     String,
 )
-from ..data_frame import header_to_dbcolumn
+from ..data_frame import CycDataFrame
+from ..markers import Markers
 
 
 log = logging.getLogger(__name__)
 
 MARKERS_PATH = os.path.join(os.path.dirname(__file__),
-                            os.pardir, 'markers.json')
+                            os.pardir, 'markers', 'markers.json')
 with open(MARKERS_PATH, 'r') as fp:
     KNOWN_MARKERS = json.load(fp)
 
@@ -105,14 +106,14 @@ class Cell(Base):
 
 
 for ftr in KNOWN_MARKERS['other_features']:
-    ftr = header_to_dbcolumn(ftr)
+    ftr = ftr.lower()
     if ftr == 'sample_cell_id':
         continue
     setattr(Cell, ftr, Column(Numeric(15, 4)))
 
 
 for mkr in KNOWN_MARKERS['markers']:
-    mkr = header_to_dbcolumn(mkr)
+    mkr = mkr.lower()
     setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 4)))
     setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 4)))
 
