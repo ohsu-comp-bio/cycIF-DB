@@ -10,6 +10,14 @@ from ..markers import Markers
 log = logging.getLogger(__name__)
 
 HEADER_MARKER_NAME = 'marker_name'
+MARKER_SUFFIX = {
+    '_nuclei masks': '__nuclei_masks',
+    '_nucleimasks': '__nuclei_masks',
+    '_nuclei_masks': '__nuclei_masks',
+    '_cell masks': '__cell_masks',
+    '_cellmasks': '__cell_masks',
+    '_cell_masks': '__cell_masks',
+}
 
 
 class CycDataFrame(object):
@@ -23,14 +31,10 @@ class CycDataFrame(object):
         """
         st = st.lower()
 
-        if st.endswith('_nuclei masks'):
-            marker, suffix = st[:-13], '__nuclei_masks'
-        elif st.endswith('_nucleimasks'):
-            marker, suffix = st[:-12], '__nuclei_masks'
-        elif st.endswith('_cell masks'):
-            marker, suffix = st[:-11], '__cell_masks'
-        elif st.endswith('_cellmasks'):
-            marker, suffix = st[:-10], '__cell_masks'
+        for sfx in MARKER_SUFFIX:
+            if st.endswith(sfx):
+                marker, suffix = st[: -len(sfx)], MARKER_SUFFIX[sfx]
+                break
         else:
             marker, suffix = st, ''
 
@@ -76,9 +80,7 @@ class CycDataFrame(object):
         unknown_others = [mkr for mkr in others
                           if self.stock_markers.get_dbname(mkr) is None]
 
-        if not unknown_markers and not unknown_others:
-            log.info("Check DB schema compatibility: Succeed!")
-        else:
+        if unknown_markers or unknown_others:
             message = "Found %d unknown markers: %s." \
                 % (len(unknown_markers), ', '.join(unknown_markers)) \
                 if unknown_markers else ""
@@ -101,20 +103,21 @@ class CycDataFrame(object):
                 "match any marker name listed in the `markers.csv`: %s"
                 % (', '.join(diff1)))
 
+        log.info("Check DB schema compatibility: Succeed!")
+
 
 def header_to_marker(st):
     """ Map DataFrame header to conventional name of marker
     """
     lower = st.lower()
-    if lower.endswith(('_nuclei masks')):
-        return st[:-13]
-    if lower.endswith(('_nucleimasks')):
-        return st[:-12]
-    if lower.endswith(('_cell masks')):
-        return st[:-11]
-    if lower.endswith(('_cellmasks')):
-        return st[:-10]
-    return st
+    for sfx in MARKER_SUFFIX:
+        if lower.endswith(sfx):
+            rval = st[: -len(sfx)]
+            break
+    else:
+        rval = st
+
+    return rval
 
 
 def get_headers_categorized(data, **kwargs):

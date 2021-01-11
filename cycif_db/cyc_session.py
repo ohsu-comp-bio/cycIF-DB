@@ -28,13 +28,15 @@ class CycSession(Session):
             engine = engine_maker()
             bind = engine
         super(CycSession, self).__init__(bind=bind, **kwargs)
-        self.data_frame = CycDataFrame()
 
     def __enter__(self):
         return self
 
     def __exit__(self, type_, value, traceback):
         self.close()
+
+    def load_dataframe_util(self):
+        self.data_frame = CycDataFrame()
 
     ######################################################
     #              Data Entry
@@ -78,6 +80,8 @@ class CycSession(Session):
 
         sample_id = self.get_sample_id(sample)
 
+        if not hasattr(self, 'data_frame'):
+            self.load_dataframe_util()
         cells.columns = cells.columns.map(self.data_frame.header_to_dbcolumn)
         cell_obs = cells.to_dict('records')
         for ob in cell_obs:
@@ -164,6 +168,8 @@ class CycSession(Session):
             Addtional parameters used `pd.read_csv`.
         """
         # check schema compatibility and marker consistency
+        if not hasattr(self, 'data_frame'):
+            self.load_dataframe_util()
         self.data_frame.check_feature_compatibility(cells, markers)
 
         try:
