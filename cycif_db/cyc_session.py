@@ -188,6 +188,61 @@ class CycSession(Session):
             self.close()
 
     ###################################################
+    #              Data Removal
+    ###################################################
+    def delete_sample(self, id=None, name=None):
+        """ Remove a sample and its related records from database
+
+        Parameters
+        ----------
+        id: int, default is None.
+            The index id in `samples` table.
+        name: str, default is None.
+            The unique name of an sample.
+        """
+        if id is not None:
+            if not isinstance(id, int):
+                raise ValueError("Invalid datatype for `id`")
+            self.query(Sample).filter_by(id=id).delete()
+        else:
+            if not isinstance(name, str):
+                raise ValueError("Invalid argument datatype!")
+            self.query(Sample).filter_by(name=name).delete()
+
+        self.commit()
+
+    def delete_marker(self, id=None, name=None):
+        """ Remove a sample and its related records from database
+
+        Parameters
+        ----------
+        id: int, default is None.
+            The index id in `samples` table.
+        name: str, default is None.
+            The unique name of an sample.
+        """
+        if id is not None:
+            if not isinstance(id, int):
+                raise ValueError("Invalid datatype for `id`")
+            self.query(Marker).filter_by(id=id).delete()
+        else:
+            if not isinstance(name, str):
+                raise ValueError("Invalid argument datatype!")
+            self.query(Marker).filter_by(name=name).delete()
+
+        self.commit()
+
+    def delete_all(self):
+        """ Remove all records in all tables in the database.
+        """
+        self.query(Sample).delete()
+        self.query(Marker).delete()
+        self.query(Cell).delete()
+        self.query(Sample_Marker_Association).delete()
+
+        self.commit()
+
+    ###################################################
     #              Data Query
     ###################################################
     def get_or_create_marker_by_name(self, marker_name):
@@ -270,7 +325,7 @@ class CycSession(Session):
             func.lower(Marker.name) == marker_name.lower()).first()
         return marker
 
-    def list_samples(self):
+    def list_samples(self, detailed=False):
         """ List all the samples stored in database.
 
         Returns
@@ -278,9 +333,11 @@ class CycSession(Session):
         List of Sample objects or None.
         """
         sample_list = self.query(Sample).all()
+        if detailed:
+            sample_list = [item.__dict__ for item in sample_list]
         return sample_list
 
-    def list_markers(self):
+    def list_markers(self, detailed=False):
         """ List all the markers stored in database.
 
         Returns
@@ -288,4 +345,6 @@ class CycSession(Session):
         List of Marker objects or None.
         """
         marker_list = self.query(Marker).all()
+        if detailed:
+            marker_list = [item.__dict__ for item in marker_list]
         return marker_list
