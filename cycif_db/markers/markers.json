@@ -99,7 +99,7 @@
         "ERK_1": ["ERK-1"],
         "ER_alpha": ["ER-alpha"],
         "ET_1": ["ET-1"],
-        "E_cadherin": ["E_cadherin"],
+        "E_cadherin": ["E-cadherin", "E_cadherin"],
         "Ecad": ["Ecad"],
         "Eomes_(Tbr2)": ["Eomes (Tbr2)"],
         "EpCAM": ["EpCAM"],
