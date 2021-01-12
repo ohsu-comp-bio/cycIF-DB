@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    'sample_name', type=str,
-    help="The name of sample.")
+    'sample', type=str,
+    help="Sample name and annotation separated by `;`.")
 parser.add_argument(
     'cells', type=str,
     help="The path to cells quantification data, in csv.")
@@ -29,7 +29,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-log.info("The sample name: {}.".format(args.sample_name))
+sample_args = args.sample.split(';', 1)
+if len(sample_args) == 1:
+    sample = sample_args[0]
+else:
+    sample = dict(name=sample_args[0].strip(),
+                  annotation=sample_args[1].strip())
+log.info("The sample name: {}.".format(sample))
 
 cells_path = str(pathlib.Path(args.cells).absolute())
 log.info(f"The path to Cells: {cells_path}.")
@@ -39,4 +45,4 @@ log.info(f"The path to Markers: {markers_path}.")
 
 with CycSession() as csess:
     csess.add_sample_complex(
-        args.sample_name, cells_path, markers_path)
+        sample, cells_path, markers_path)

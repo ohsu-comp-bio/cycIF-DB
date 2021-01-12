@@ -38,7 +38,7 @@ class Markers(object):
         markers = markers_n_features['markers']
         log.info("Loaded %d unique DB column names for markers."
                  % len(markers))
-        self.markers = {name.lower(): k.lower() for k, v in markers.items()
+        self.markers = {name.lower(): k for k, v in markers.items()
                         for name in v}
         log.info("Converted to %d pairs of `db_keyword: marker_name`."
                  % len(self.markers))
@@ -47,7 +47,7 @@ class Markers(object):
         log.info("Loaded %d unique DB column names for non-marker features."
                  % len(other_features))
         self.other_features = \
-            {name.lower(): k.lower() for k, v in other_features.items()
+            {name.lower(): k for k, v in other_features.items()
              for name in v}
 
     def get_dbname(self, name):
@@ -128,7 +128,7 @@ class Markers(object):
             toplace = self._path + '.new'
 
         with open(toplace, 'w') as fp:
-            json.dump(markers_n_features, fp)
+            json.dump(markers_n_features, fp, indent=4, sort_keys=True)
 
         if reload:
             self._path = toplace

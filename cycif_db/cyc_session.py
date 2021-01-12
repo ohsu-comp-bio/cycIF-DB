@@ -38,6 +38,16 @@ class CycSession(Session):
     def load_dataframe_util(self):
         self.data_frame = CycDataFrame()
 
+    def get_marker_dbname(self, marker_name):
+        if not hasattr(self, 'data_frame'):
+            self.load_dataframe_util()
+
+        rval = self.data_frame.stock_markers.get_dbname(marker_name)
+        if not rval:
+            raise ValueError(f"Unknown marker name {marker_name}! Please "
+                             "consider adding it to the `markers.json` file.")
+        return rval
+
     ######################################################
     #              Data Entry
     ######################################################
@@ -100,8 +110,11 @@ class CycSession(Session):
             Marker name (string) or dict to build a Marker object.
         """
         if isinstance(marker, str):
+            marker = self.get_marker_dbname(marker)
             marker = Marker(name=marker)
         elif isinstance(marker, dict):
+            marker['name'] = self.get_marker_dbname(
+                marker['name'])
             marker = Marker(**marker)
         elif not isinstance(marker, Marker):
             raise ValueError("Unsupported datatype for sample!")
@@ -320,9 +333,11 @@ class CycSession(Session):
         -------
         Marker object or None.
         """
+        db_name = self.get_marker_dbname(marker_name)
+
         # TODO Make header_to_dbcolumn query.
         marker = self.query(Marker).filter(
-            func.lower(Marker.name) == marker_name.lower()).first()
+            func.lower(Marker.name) == db_name.lower()).first()
         return marker
 
     def list_samples(self, detailed=False):

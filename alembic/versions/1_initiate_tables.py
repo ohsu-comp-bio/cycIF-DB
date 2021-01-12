@@ -22,22 +22,22 @@ def upgrade():
         'markers',
         sa.Column('id', sa.Integer(), primary_key=True),
         sa.Column('name', sa.String()),
-        sa.Column('entry_at', sa.DateTime(), server_default=sa.func.current_timestamp())
+        sa.Column('entry_at', sa.DateTime(timezone=True), server_default=sa.func.current_timestamp())
     )
     op.create_index('ix_marker_name', 'markers', ['name'], unique=True)
     op.create_table(
         'samples',
         sa.Column('id', sa.Integer(), primary_key=True),
         sa.Column('name', sa.String()),
-        sa.Column('entry_at', sa.DateTime(), server_default=sa.func.current_timestamp())
+        sa.Column('entry_at', sa.DateTime(timezone=True), server_default=sa.func.current_timestamp())
     )
     op.create_index('ix_sample_name', 'samples', ['name'], unique=True)
     op.create_table(
         'cells',
         sa.Column('id', sa.Integer(), primary_key=True),
-        sa.Column('sample_id', sa.Integer()),
+        sa.Column('sample_id', sa.Integer(), nullable=False),
         sa.Column('sample_cell_id', sa.Integer(), nullable=True),
-        sa.Column('entry_at', sa.DateTime(), server_default=sa.func.current_timestamp()),
+        sa.Column('entry_at', sa.DateTime(timezone=True), server_default=sa.func.current_timestamp()),
         sa.Column('area', sa.Numeric(precision=15, scale=4), nullable=True),
         sa.Column('eccentricity', sa.Numeric(precision=15, scale=4), nullable=True),
         sa.Column('extent', sa.Numeric(precision=15, scale=4), nullable=True),
@@ -170,7 +170,7 @@ def upgrade():
         sa.Column('marker_id', sa.Integer()),
         sa.Column('channel_number', sa.Integer(), nullable=True),
         sa.Column('cycle_number', sa.Integer(), nullable=True),
-        sa.Column('entry_at', sa.DateTime(), server_default=sa.func.current_timestamp()),
+        sa.Column('entry_at', sa.DateTime(timezone=True), server_default=sa.func.current_timestamp()),
         sa.ForeignKeyConstraint(['marker_id'], ['markers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['sample_id'], ['samples.id'], ondelete='CASCADE'),
     )

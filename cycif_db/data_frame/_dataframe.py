@@ -38,7 +38,7 @@ class CycDataFrame(object):
         else:
             marker, suffix = st, ''
 
-        return self.stock_markers.get_dbname(marker) + suffix
+        return self.stock_markers.get_dbname(marker).lower() + suffix
 
     def check_feature_compatibility(self, cells_data, markers_data, **kwargs):
         """ Check whether markers in cells table matches marker names
@@ -76,26 +76,38 @@ class CycDataFrame(object):
 
         unknown_markers = [mkr for mkr in markers_in_cells
                            if self.stock_markers.get_dbname(mkr) is None]
+        unknown_markers = set(unknown_markers)
 
         unknown_others = [mkr for mkr in others
                           if self.stock_markers.get_dbname(mkr) is None]
+        unknown_others = set(unknown_others)
 
-        if unknown_markers or unknown_others:
-            message = "Found %d unknown markers: %s." \
+        m_markers = markers_data.map(self.stock_markers.get_dbname)
+        unknown_m_markers = []
+        for i, mkr in enumerate(markers_data):
+            if m_markers[i] is None:
+                unknown_m_markers.append(mkr)
+        unknown_m_markers = set(unknown_m_markers)
+
+        if unknown_markers or unknown_others or unknown_m_markers:
+            message = "Found %d unknown marker(s): %s." \
                 % (len(unknown_markers), ', '.join(unknown_markers)) \
                 if unknown_markers else ""
             if unknown_others:
                 message = message + \
-                    " Found %d unknown non-marker features: %s."\
+                    " Found %d unknown non-marker feature(s): %s."\
                     % (len(unknown_others), ', '.join(unknown_others))
-            raise ValueError("The cells data are not compatible with database "
-                             "schema! %s" % message)
+            if unknown_m_markers:
+                message = message + \
+                    " Found %d unknown marker(s) in `markers.csv`: %s."\
+                    % (len(unknown_m_markers), ', '.join(unknown_m_markers))
+            raise ValueError("The sample data are not compatible with "
+                             "database schema! %s" % message)
 
-        m_markers = set(markers_data.map(self.stock_markers.get_dbname))
-
+        m_markers_set = set(m_markers)
         markers_set_in_cells = set(markers_in_cells)
         diff1 = [mkr for mkr in markers_set_in_cells
-                 if self.stock_markers.get_dbname(mkr) not in m_markers]
+                 if self.stock_markers.get_dbname(mkr) not in m_markers_set]
 
         if diff1:
             log.warn(
@@ -140,10 +152,7 @@ def get_headers_categorized(data, **kwargs):
         raise ValueError("Unrecognized type for data!")
 
     markers = [x for x in headers
-               if x.lower().endswith((
-                   '_nuclei masks', '_nuclei_masks',
-                   '_cell masks', '_cell_masks',
-                   '_cellmasks', '_cellmasks'))]
+               if x.lower().endswith(tuple(MARKER_SUFFIX.keys()))]
     others = [x for x in headers if x not in markers]
 
     return markers, others
