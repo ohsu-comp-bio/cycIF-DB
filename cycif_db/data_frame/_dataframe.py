@@ -17,6 +17,7 @@ MARKER_SUFFIX = {
     '_cell masks': '__cell_masks',
     '_cellmasks': '__cell_masks',
     '_cell_masks': '__cell_masks',
+    '_cellpose masks on data 42': '__nuclei_masks',
 }
 
 
@@ -95,11 +96,11 @@ class CycDataFrame(object):
                 if unknown_markers else ""
             if unknown_others:
                 message = message + \
-                    " Found %d unknown non-marker feature(s): %s."\
+                    "\nFound %d unknown non-marker feature(s): %s."\
                     % (len(unknown_others), ', '.join(unknown_others))
             if unknown_m_markers:
                 message = message + \
-                    " Found %d unknown marker(s) in `markers.csv`: %s."\
+                    "\nFound %d unknown marker(s) in `markers.csv`: %s."\
                     % (len(unknown_m_markers), ', '.join(unknown_m_markers))
             raise ValueError("The sample data are not compatible with "
                              "database schema! %s" % message)
