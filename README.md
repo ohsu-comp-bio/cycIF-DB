@@ -42,7 +42,7 @@ alembic revision --autogenerate -m "{slug}" --rev-id {id}
 ##### Download quantification datasets from Galaxy
 
 ```
-python scripts/download_datasets.py {sample_name} {datasets_id} [datasets_id ...]
+python scripts/download_datasets.py {sample_name} {datasets_id} [{datasets_id} ...]
 ```
 
 ##### Add a sample compex into database
