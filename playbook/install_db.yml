@@ -20,6 +20,8 @@
         postgresql_databases:
           - name: "{{ db_name }}"
             owner: "{{ db_owner }}"
+            lc_collate: C.UTF-8
+            lc_ctype: C.UTF-8
         postgresql_users:
           - name: "{{ db_owner }}"
             password: "{{ db_owner }}"
