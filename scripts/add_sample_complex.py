@@ -32,6 +32,11 @@ parser.add_argument(
           "and markers csv overrides other positional arguments. The folder "
           "name will be used as arguments for sample, separated by `--`.")
 )
+parser.add_argument(
+    '--dry_run', default=False, action='store_true',
+    help=("If enabled, run the add_sample_complex script without "
+          "committing. Database will not be changed, as a result.")
+)
 
 args = parser.parse_args()
 
@@ -90,4 +95,4 @@ log.info(f"The path to Markers: {markers_path}.")
 
 with CycSession() as csess:
     csess.add_sample_complex(
-        sample, cells_path, markers_path)
+        sample, cells_path, markers_path, dry_run=args.dry_run)

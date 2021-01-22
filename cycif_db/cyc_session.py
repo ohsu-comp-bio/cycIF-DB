@@ -164,7 +164,8 @@ class CycSession(Session):
         log.info("Added %d entries of sample marker association!"
                  % len(associates))
 
-    def add_sample_complex(self, sample, cells, markers, **kwargs):
+    def add_sample_complex(self, sample, cells, markers,
+                           dry_run=False, **kwargs):
         """ Insert the quantification result from a single sample
         into database, including cell quantification table and
         marker list table.
@@ -177,6 +178,8 @@ class CycSession(Session):
             If str, it's path string to a csv file.
         markers: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
+        dry_run: bool, default is False.
+            Whether to run the sample adding without commit.
         kwargs: keywords parameter.
             Addtional parameters used `pd.read_csv`.
         """
@@ -192,8 +195,11 @@ class CycSession(Session):
                 sample = sample['name']
             self.insert_cells_mappings(sample, cells, **kwargs)
             self.insert_sample_markers(sample, markers, **kwargs)
-            self.commit()
-            log.info("Adding sample complex completed!")
+            if not dry_run:
+                self.commit()
+                log.info("Adding sample complex completed!")
+            else:
+                self.rollback()
         except Exception:
             self.rollback()
             raise
@@ -225,14 +231,14 @@ class CycSession(Session):
         self.commit()
 
     def delete_marker(self, id=None, name=None):
-        """ Remove a sample and its related records from database
+        """ Remove a marker and its related records from database
 
         Parameters
         ----------
         id: int, default is None.
-            The index id in `samples` table.
+            The index id in `markers` table.
         name: str, default is None.
-            The unique name of an sample.
+            The unique name of an marker.
         """
         if id is not None:
             if not isinstance(id, int):
