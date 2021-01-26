@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'sample', type=str, nargs='?',
-    help="Sample name and annotation separated by `--`.")
+    help="Sample name and tag separated by `__`.")
 parser.add_argument(
     'cells', type=str, nargs='?',
     help="The path to cells quantification data, in csv.")
@@ -30,7 +30,7 @@ parser.add_argument(
     '--dir', '-d', dest='dir', type=str, required=False,
     help=("As an alternative input option, a folder containing bother cells "
           "and markers csv overrides other positional arguments. The folder "
-          "name will be used as arguments for sample, separated by `--`.")
+          "name will be used as arguments for sample, separated by `__`.")
 )
 parser.add_argument(
     '--dry_run', default=False, action='store_true',
@@ -40,12 +40,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-dir = args.dir
+folder = args.dir
 
-sample_annotation = ""
-
-if dir:
-    folder = pathlib.Path(dir)
+if folder:
+    folder = pathlib.Path(folder)
     log.info("Use folder: %s", str(folder))
 
     sample_args = folder.name
@@ -81,11 +79,10 @@ else:
         raise Exception("Positional argument `markers` was required!")
     markers_path = str(pathlib.Path(args.markers).absolute())
 
-sample_args = sample_args.split('--', 1)
+sample_args = sample_args.split('__', 1)
 sample = dict(name=sample_args[0].strip())
-if len(sample_args) == 2:
-    sample_annotation = \
-        sample_annotation.strip() + '\n' + sample_args[1].strip()
+if len(sample_args) > 1:
+    sample['tag'] = sample_args[1].strip()
 if sample_annotation:
     sample['annotation'] = sample_annotation.strip()
 

@@ -52,7 +52,7 @@ python scripts/add_sample_complex.py -d {folder / sample_name}
 ```
 or
 ```
-python scripts/add_sample_complex.py "{sample_name} -- {annotation}" {path_to_cells} {path_to_markers}
+python scripts/add_sample_complex.py "{sample_name}__{tag}" {path_to_cells} {path_to_markers}
 ```
 ##
 ##### Python APIs
