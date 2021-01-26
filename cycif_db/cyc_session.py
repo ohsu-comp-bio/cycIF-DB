@@ -218,11 +218,10 @@ class CycSession(Session):
         else:
             assert name and isinstance(name, str), \
                 "Argument `name` must be a valid string!"
-            if not tag:
-                tag = ''
             self.query(Sample)\
                 .filter(func.lower(Sample.name) == name.lower())\
-                .filter(func.lower(Sample.tag) == tag.lower())\
+                .filter((Sample.tag == tag)
+                        | (func.lower(Sample.tag) == str(tag).lower()))\
                 .delete()
 
         self.commit()
@@ -319,7 +318,7 @@ class CycSession(Session):
                 tag = sample.tag or ''
         elif isinstance(sample, dict):
             name = sample.get('name')
-            tag = sample.get('tag', '')
+            tag = sample.get('tag', None)
             assert name and isinstance(name, str), \
                 "The sample name must be a valid string!"
         else:
@@ -327,7 +326,8 @@ class CycSession(Session):
 
         query = self.query(Sample.id)\
             .filter(func.lower(Sample.name) == name.lower())\
-            .filter(func.lower(Sample.tag) == tag.lower())\
+            .filter((Sample.tag == tag)
+                    | (func.lower(Sample.tag) == str(tag).lower()))\
             .first()
         assert query, ("This database has no matching record for sammple=`{}`,"
                        " name=`{}` and tag=`{}`!".format(sample, name, tag))
