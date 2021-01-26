@@ -22,6 +22,10 @@ def get_configs(conf_file=None):
 
 def engine_maker(url=None, **kw):
     if not url:
+        configs = get_configs()
+        assert 'db_url' in configs and configs['db_url'], \
+            "No database URL is set in `config.yml`!"
+
         url = get_configs()['db_url']
     engine = create_engine(url, **kw)
     return engine

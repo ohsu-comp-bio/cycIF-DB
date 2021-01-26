@@ -34,7 +34,8 @@ class Sample(Base):
     __tablename__ = 'samples'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
+    tag = Column(String)
     annotation = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -43,10 +44,10 @@ class Sample(Base):
                            back_populates='sample')
 
     def __repr__(self):
-        return "<Sample(name='{}')>".format(self.name)
+        return "<Sample(name='{}', tag='{}')>".format(self.name, self.tag)
 
 
-Index('ix_sample_name', Sample.name, unique=True)
+Index('ix_sample_name', Sample.name, Sample.tag, unique=True)
 
 
 class Marker(Base):

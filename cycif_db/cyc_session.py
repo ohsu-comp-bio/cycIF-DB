@@ -56,28 +56,26 @@ class CycSession(Session):
 
         Parameters
         -----------
-        sample: str, dict or Sample object.
-            Sample name or dict to build a Sample object.
+        sample: dict or Sample object.
+            Dict to build a Sample object.
         """
-        if isinstance(sample, str):
-            sample = Sample(name=sample)
-        elif isinstance(sample, dict):
+        if isinstance(sample, dict):
             sample = Sample(**sample)
-        elif not isinstance(sample, Sample):
-            raise ValueError("Unsupported datatype for sample!")
+        assert isinstance(sample, Sample), \
+            "Unsupported datatype for sample!"
 
         self.add(sample)
         if not self.autoflush:
             self.flush()
         log.info("Added sample {}.".format(repr(sample)))
 
-    def insert_cells_mappings(self, sample, cells, **kwargs):
+    def insert_cells_mappings(self, sample_id, cells, **kwargs):
         """ Insert cell quantification data into cells table.
 
         Parameters
         ----------
-        sample: str or Sample object.
-            The parent of cells.
+        sample_id: int.
+            Index of sample object in database.
         cells: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
         kwargs: keywords parameter.
@@ -87,8 +85,6 @@ class CycSession(Session):
             cells = pd.read_csv(cells)
         elif not isinstance(cells, DataFrame):
             raise ValueError("Unsupported datatype for cells!")
-
-        sample_id = self.get_sample_id(sample)
 
         if not hasattr(self, 'data_frame'):
             self.load_dataframe_util()
@@ -124,13 +120,13 @@ class CycSession(Session):
             self.flush()
         log.info("Added marker {}.".format(repr(marker)))
 
-    def insert_sample_markers(self, sample, markers):
+    def insert_sample_markers(self, sample_id, markers):
         """ Insert sample marker association into database.
 
         Parameters
         ----------
-        sample: str or Sample object.
-            The parent of markers.
+        sample_id: int.
+            Index of sample object in database.
         markers: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
         kwargs: keywords parameter.
@@ -144,8 +140,6 @@ class CycSession(Session):
             markers = pd.read_csv(markers)
         elif not isinstance(markers, DataFrame):
             raise ValueError("Unsupported datatype for markers!")
-
-        sample_id = self.get_sample_id(sample)
 
         associates = []
         for i, row in markers.iterrows():
@@ -172,8 +166,8 @@ class CycSession(Session):
 
         Parameters
         ----------
-        sample: str, dict or Sample object.
-            Sample name or dict to build a Sample object.
+        sample: dict or Sample object.
+            Dict to build a Sample object.
         cells: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
         markers: str or pandas.DataFrame object.
@@ -189,12 +183,10 @@ class CycSession(Session):
         self.data_frame.check_feature_compatibility(cells, markers)
 
         try:
-            if not isinstance(sample, Sample):
-                self.add_sample(sample)
-            if isinstance(sample, dict):
-                sample = sample['name']
-            self.insert_cells_mappings(sample, cells, **kwargs)
-            self.insert_sample_markers(sample, markers, **kwargs)
+            self.add_sample(sample)
+            sample_id = self.get_sample_id(sample)
+            self.insert_cells_mappings(sample_id, cells, **kwargs)
+            self.insert_sample_markers(sample_id, markers, **kwargs)
             if not dry_run:
                 self.commit()
                 log.info("Adding sample complex completed!")
@@ -209,7 +201,7 @@ class CycSession(Session):
     ###################################################
     #              Data Removal
     ###################################################
-    def delete_sample(self, id=None, name=None):
+    def delete_sample(self, id=None, name=None, tag=None):
         """ Remove a sample and its related records from database
 
         Parameters
@@ -217,16 +209,21 @@ class CycSession(Session):
         id: int, default is None.
             The index id in `samples` table.
         name: str, default is None.
-            The unique name of an sample.
+            The name of the sample.
+        tag: str, default is None.
+            The tag of the sample.
         """
         if id is not None:
-            if not isinstance(id, int):
-                raise ValueError("Invalid datatype for `id`")
             self.query(Sample).filter_by(id=id).delete()
         else:
-            if not isinstance(name, str):
-                raise ValueError("Invalid argument datatype!")
-            self.query(Sample).filter_by(name=name).delete()
+            assert name and isinstance(name, str), \
+                "Argument `name` must be a valid string!"
+            if not tag:
+                tag = ''
+            self.query(Sample)\
+                .filter(func.lower(Sample.name) == name.lower())\
+                .filter(func.lower(Sample.tag) == tag.lower())\
+                .delete()
 
         self.commit()
 
@@ -289,8 +286,8 @@ class CycSession(Session):
 
         return marker
 
-    def get_sample_by_name(self, sample_name):
-        """ Query  samples by name.
+    def get_samples_by_name(self, sample_name):
+        """ Query samples by name.
 
         Parameters
         ----------
@@ -299,32 +296,42 @@ class CycSession(Session):
 
         Returns
         -------
-        Sample object or None.
+        A list of `Sample` objects or None.
         """
-        sample = self.query(Sample).filter(
-            func.lower(Sample.name) == sample_name.lower()).first()
-        return sample
+        samples = self.query(Sample).filter(
+            func.lower(Sample.name) == sample_name.lower())
+        return samples
 
     def get_sample_id(self, sample):
         """ Get unique sample ID in database.
 
         Parameters
         ----------
-        sample: str or Sample object.
-            If str, it's the unique name of the object.
+        sample: dict or Sample object.
+
         """
         if isinstance(sample, Sample):
             sample_id = sample.id
-            assert sample_id
-        elif isinstance(sample, str):
-            sample_id = self.query(Sample.id).filter(
-                func.lower(Sample.name) == sample.lower()).first()
-            assert sample_id, (f"The name `{sample}` didn't mathch"
-                               " any Sample object in database!")
-            sample_id = sample_id[0]
+            if sample_id is not None:
+                return sample_id
+            else:
+                name = sample.name
+                tag = sample.tag or ''
+        elif isinstance(sample, dict):
+            name = sample.get('name')
+            tag = sample.get('tag', '')
+            assert name and isinstance(name, str), \
+                "The sample name must be a valid string!"
         else:
-            raise ValueError("Unsupported datatype for sample.")
+            raise ValueError("Unsupported data type for `sample`.")
 
+        query = self.query(Sample.id)\
+            .filter(func.lower(Sample.name) == name.lower())\
+            .filter(func.lower(Sample.tag) == tag.lower())\
+            .first()
+        assert query, ("This database has no matching record for sammple=`{}`,"
+                       " name=`{}` and tag=`{}`!".format(sample, name, tag))
+        sample_id = query[0]
         return sample_id
 
     def get_marker_by_name(self, marker_name):
