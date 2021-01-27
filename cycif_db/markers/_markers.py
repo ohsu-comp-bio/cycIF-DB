@@ -64,6 +64,8 @@ class Markers(object):
         str, or None if the name doesn't exist in the `markers.json` file.
         """
         lower_name = name.lower()
+        # remove all white spaces
+        lower_name = ''.join(lower_name.split())
         try:
             return self.markers[lower_name]
         except KeyError:
