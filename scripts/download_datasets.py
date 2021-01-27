@@ -50,9 +50,10 @@ if not api_key:
                     "The parameter can be set in `config.yml` as well.")
 
 folder = pathlib.Path(args.destination)
-if not folder.exists() or not folder.is_dir():
-    log.info(f"Folder `{folder}` doesn't exist. Create it!")
-folder.mkdir(parents=True, exist_ok=True)
+if folder.exists() and folder.is_dir():
+    raise Exception("The target folder `{folder}` has already existed!")
+log.info(f"Create folder `{folder}`.")
+folder.mkdir(parents=True, exist_ok=False)
 
 gi = galaxy.GalaxyInstance(url=server, key=api_key)
 dataset_cli = galaxy.datasets.DatasetClient(gi)
