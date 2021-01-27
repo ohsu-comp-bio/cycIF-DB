@@ -38,6 +38,8 @@ setup(name='cycIF-DB',
       package_data={
           '': ['README.md',
                'requirements.txt',
+               'alembic.ini',
+               'alembic/script.py.mako',
                'cycif_db/config.yml',
                'cycif_db/markers.json']},
       include_package_data=True,

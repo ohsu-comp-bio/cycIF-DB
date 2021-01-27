@@ -3,6 +3,12 @@
 This library provides simple APIs to manage cycIF quantification data.
 
 ##
+#### Install this library in place
+
+```
+pip install -e .
+```
+
 ##### Install postgresql and configure privileges in cloud server(s)
 
 ```

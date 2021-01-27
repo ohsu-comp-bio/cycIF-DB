@@ -1,6 +1,6 @@
 #db_url: sqlite:////tmp/db.sqlite
 #db_url: postgresql+psycopg2://cycif:cycif@localhost:5432/cycif
-#db_url: postgresql+psycopg2://cycif_user:cycif_user@cycifdb.ohsu.edu:5432/cycif
+db_url: postgresql+psycopg2://cycif_user:cycif_user@cycifdb.ohsu.edu:5432/cycif
 auto_migrate: False
 galaxy_server: https://galaxy.ohsu.edu/galaxy/
 api_key:
