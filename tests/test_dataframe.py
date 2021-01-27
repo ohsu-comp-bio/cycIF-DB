@@ -48,7 +48,7 @@ def test_check_feature_compatibility():
     cp = data_frame.check_feature_compatibility(df, m_markers)
     assert cp is None
 
-    mapper = {"DAPI_1_Nuclei Masks": "DAPI_10_Nuclei Masks"}
+    mapper = {"DAPI_1_Nuclei Masks": "DAPI_100_Nuclei Masks"}
     new_df = df.rename(columns=mapper, inplace=False)
     assert_raises(ValueError, data_frame.check_feature_compatibility,
                   new_df, m_markers)

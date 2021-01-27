@@ -63,17 +63,14 @@ class Markers(object):
         ----------
         str, or None if the name doesn't exist in the `markers.json` file.
         """
-        lower_name = name.lower()
-        # remove all white spaces
-        lower_name = ''.join(lower_name.split())
-        try:
-            return self.markers[lower_name]
-        except KeyError:
-            try:
-                return self.other_features[lower_name]
-            except KeyError:
+        name = format_marker(name)
+
+        rval = self.markers.get(name, None)
+        if rval is None:
+            rval = self.other_features.get(name, None)
+            if rval is None:
                 log.warn(f"The marker name `{name}` was not recognized!")
-                return None
+        return rval
 
     def update_stock_markers(self, new_markers, new_others=None,
                              toplace=None, reload=False):
@@ -137,3 +134,9 @@ class Markers(object):
             self._load_stock_markers()
 
         log.info("Marker/Feature list is updated!")
+
+
+def format_marker(name):
+    """ Turn to lowercaes and remove all whitespaces
+    """
+    return ''.join(name.lower().split())

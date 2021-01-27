@@ -4,20 +4,18 @@ import logging
 import pandas as pd
 from pandas import DataFrame, Index, Series
 
-from ..markers import Markers
+from ..markers import Markers, format_marker
 
 
 log = logging.getLogger(__name__)
 
 HEADER_MARKER_NAME = 'marker_name'
 MARKER_SUFFIX = {
-    '_nuclei masks': '__nuclei_masks',
     '_nucleimasks': '__nuclei_masks',
     '_nuclei_masks': '__nuclei_masks',
-    '_cell masks': '__cell_masks',
     '_cellmasks': '__cell_masks',
     '_cell_masks': '__cell_masks',
-    '_cellpose masks on data 42': '__nuclei_masks',
+    '_cellposemasksondata42': '__nuclei_masks',
 }
 
 
@@ -30,7 +28,7 @@ class CycDataFrame(object):
     def header_to_dbcolumn(self, st):
         """ Map DataFram header to column name in database.
         """
-        st = st.lower()
+        st = format_marker(st)
 
         for sfx in MARKER_SUFFIX:
             if st.endswith(sfx):
@@ -119,16 +117,20 @@ class CycDataFrame(object):
         log.info("Check DB schema compatibility: Succeed!")
 
 
-def header_to_marker(st):
+def header_to_marker(header):
     """ Map DataFrame header to conventional name of marker
+
+    Parameters
+    ----------
+    header: str
     """
-    lower = st.lower()
+    new = format_marker(header)
     for sfx in MARKER_SUFFIX:
-        if lower.endswith(sfx):
-            rval = st[: -len(sfx)]
+        if new.endswith(sfx):
+            rval = header.rsplit('_', 1)[0]
             break
     else:
-        rval = st
+        rval = header
 
     return rval
 
@@ -152,8 +154,8 @@ def get_headers_categorized(data, **kwargs):
     else:
         raise ValueError("Unrecognized type for data!")
 
-    markers = [x for x in headers
-               if x.lower().endswith(tuple(MARKER_SUFFIX.keys()))]
+    markers = [x for x in headers if
+               format_marker(x).endswith(tuple(MARKER_SUFFIX.keys()))]
     others = [x for x in headers if x not in markers]
 
     return markers, others
