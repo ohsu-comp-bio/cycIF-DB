@@ -182,6 +182,10 @@ class CycSession(Session):
             self.load_dataframe_util()
         self.data_frame.check_feature_compatibility(cells, markers)
 
+        if self.get_sample_id(sample) is not None:
+            raise Exception("This sample couldn't be added into database "
+                            "because of unique constraint or having invalid"
+                            " `id`!")
         try:
             self.add_sample(sample)
             sample_id = self.get_sample_id(sample)
@@ -329,10 +333,12 @@ class CycSession(Session):
             .filter((Sample.tag == tag)
                     | (func.lower(Sample.tag) == str(tag).lower()))\
             .first()
-        assert query, ("This database has no matching record for sammple=`{}`,"
-                       " name=`{}` and tag=`{}`!".format(sample, name, tag))
-        sample_id = query[0]
-        return sample_id
+
+        if query:
+            return query[0]
+
+        log.info("This database has no matching record for sammple=`{}`,"
+                 " name=`{}` and tag=`{}`!".format(sample, name, tag))
 
     def get_marker_by_name(self, marker_name):
         """ Query markers by name.
