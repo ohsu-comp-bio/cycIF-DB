@@ -2,20 +2,19 @@
 """
 import logging
 import pandas as pd
+import re
 from pandas import DataFrame, Index, Series
 
-from ..markers import Markers, format_marker
+from ..markers import Markers
 
 
 log = logging.getLogger(__name__)
 
 HEADER_MARKER_NAME = 'marker_name'
-MARKER_SUFFIX = {
-    '_nucleimasks': '__nuclei_masks',
-    '_nuclei_masks': '__nuclei_masks',
-    '_cellmasks': '__cell_masks',
-    '_cell_masks': '__cell_masks',
-    '_cellposemasksondata42': '__nuclei_masks',
+HEADER_SUFFIX_MAPPING = {
+    '_+nuclei[\s_-]*masks$': '__nuclei_masks',
+    '_+cell[\s_-]*masks$': '__cell_masks',
+    '_+cellpose[\s_-]*masks[\s_-]*on[\s_-]*data[\s_-]*\d*$': '__nuclei_masks',
 }
 
 
@@ -28,16 +27,12 @@ class CycDataFrame(object):
     def header_to_dbcolumn(self, st):
         """ Map DataFram header to column name in database.
         """
-        st = format_marker(st)
+        for k, v in HEADER_SUFFIX_MAPPING.items():
+            marker, count = re.subn(k, '', st, flags=re.I)
+            if count:
+                return self.stock_markers.get_dbname(marker).lower() + v
 
-        for sfx in MARKER_SUFFIX:
-            if st.endswith(sfx):
-                marker, suffix = st[: -len(sfx)], MARKER_SUFFIX[sfx]
-                break
-        else:
-            marker, suffix = st, ''
-
-        return self.stock_markers.get_dbname(marker).lower() + suffix
+        return self.stock_markers.get_dbname(st).lower()
 
     def check_feature_compatibility(self, cells_data, markers_data, **kwargs):
         """ Check whether markers in cells table matches marker names
@@ -124,15 +119,21 @@ def header_to_marker(header):
     ----------
     header: str
     """
-    new = format_marker(header)
-    for sfx in MARKER_SUFFIX:
-        if new.endswith(sfx):
-            rval = header.rsplit('_', 1)[0]
-            break
-    else:
-        rval = header
+    for k in HEADER_SUFFIX_MAPPING:
+        rval, count = re.subn(k, '', header, flags=re.I)
+        if count:
+            return rval
 
-    return rval
+    return header
+
+
+def is_marker(header):
+    """ Check whether a header is marker plus a suffix.
+    """
+    for k in HEADER_SUFFIX_MAPPING:
+        if re.search(k, header, flags=re.I):
+            return True
+    return False
 
 
 def get_headers_categorized(data, **kwargs):
@@ -154,8 +155,7 @@ def get_headers_categorized(data, **kwargs):
     else:
         raise ValueError("Unrecognized type for data!")
 
-    markers = [x for x in headers if
-               format_marker(x).endswith(tuple(MARKER_SUFFIX.keys()))]
+    markers = [x for x in headers if is_marker(x)]
     others = [x for x in headers if x not in markers]
 
     return markers, others
