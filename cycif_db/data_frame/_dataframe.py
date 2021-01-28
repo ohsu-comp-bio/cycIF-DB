@@ -18,6 +18,10 @@ HEADER_SUFFIX_MAPPING = {
 }
 
 
+class MarkerIncompatibilityError(Exception):
+    pass
+
+
 class CycDataFrame(object):
     """ Utils relating to cycif quantification data in `pandas.DataFrame`.
     """
@@ -95,8 +99,9 @@ class CycDataFrame(object):
                 message = message + \
                     "\nFound %d unknown marker(s) in `markers.csv`: %s."\
                     % (len(unknown_m_markers), ', '.join(unknown_m_markers))
-            raise ValueError("The sample data are not compatible with "
-                             "database schema! %s" % message)
+            raise MarkerIncompatibilityError(
+                "The sample data were not compatible with database schema! %s"
+                % message)
 
         m_markers_set = set(m_markers)
         markers_set_in_cells = set(markers_in_cells)

@@ -6,7 +6,8 @@ from nose.tools import assert_raises
 from cycif_db.data_frame import (
     CycDataFrame,
     get_headers_categorized,
-    header_to_marker)
+    header_to_marker,
+    MarkerIncompatibilityError)
 
 
 data = {
@@ -50,5 +51,6 @@ def test_check_feature_compatibility():
 
     mapper = {"DAPI_1_Nuclei Masks": "DAPI_100_Nuclei Masks"}
     new_df = df.rename(columns=mapper, inplace=False)
-    assert_raises(ValueError, data_frame.check_feature_compatibility,
+    assert_raises(MarkerIncompatibilityError,
+                  data_frame.check_feature_compatibility,
                   new_df, m_markers)
