@@ -182,10 +182,9 @@ class CycSession(Session):
             self.load_dataframe_util()
         self.data_frame.check_feature_compatibility(cells, markers)
 
-        if self.get_sample_id(sample) is not None:
-            raise Exception("This sample couldn't be added into database "
-                            "because of unique constraint or having invalid"
-                            " `id`!")
+        assert self.get_sample_id(sample) is None,\
+            ("This sample couldn't be added to database because it's "
+             "against the unique constraint or it has invalid `id`!")
         try:
             self.add_sample(sample)
             sample_id = self.get_sample_id(sample)
