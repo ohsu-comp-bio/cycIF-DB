@@ -139,4 +139,6 @@ class Markers(object):
 def format_marker(name):
     """ Turn to lowercaes and remove all whitespaces
     """
-    return ''.join(name.lower().split())
+    rval = name.lower()
+    rval = ''.join(rval.split())
+    rval = rval.replace('-', '_')

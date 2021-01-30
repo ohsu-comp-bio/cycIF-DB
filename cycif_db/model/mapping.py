@@ -6,7 +6,7 @@ import json
 import logging
 import os
 
-from sqlalchemy import Column, create_engine, ForeignKey, func, Index
+from sqlalchemy import Column, ForeignKey, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import (
@@ -16,8 +16,6 @@ from sqlalchemy.types import (
     Numeric,
     String,
 )
-from ..data_frame import CycDataFrame
-from ..markers import Markers
 
 
 log = logging.getLogger(__name__)
