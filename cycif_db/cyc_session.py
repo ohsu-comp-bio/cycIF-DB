@@ -1,4 +1,4 @@
-""" Main wrapper class to to interact with cycIF_DB
+""" Main wrapper class that interacts with cycIF_DB
 """
 import logging
 import pandas as pd
@@ -82,16 +82,22 @@ class CycSession(Session):
             Addtional parameters used `pd.read_csv`.
         """
         if isinstance(cells, str):
-            cells = pd.read_csv(cells)
+            cells = pd.read_csv(cells, **kwargs)
         elif not isinstance(cells, DataFrame):
             raise ValueError("Unsupported datatype for cells!")
 
         if not hasattr(self, 'data_frame'):
             self.load_dataframe_util()
         cells.columns = cells.columns.map(self.data_frame.header_to_dbcolumn)
+
+        # save sample specific feature list
+        feature_list = list(cells.columns)
+        self.query(Sample).filter_by(id=sample_id).update(
+            dict(feature_list=','.join(feature_list)))
+
+        cells['sample_id'] = sample_id
         cell_obs = cells.to_dict('records')
-        for ob in cell_obs:
-            ob['sample_id'] = sample_id
+
         self.bulk_insert_mappings(Cell, cell_obs)
         if not self.autoflush:
             self.flush()
@@ -120,7 +126,7 @@ class CycSession(Session):
             self.flush()
         log.info("Added marker {}.".format(repr(marker)))
 
-    def insert_sample_markers(self, sample_id, markers):
+    def insert_sample_markers(self, sample_id, markers, **kwargs):
         """ Insert sample marker association into database.
 
         Parameters
@@ -137,7 +143,7 @@ class CycSession(Session):
         None.
         """
         if isinstance(markers, str):
-            markers = pd.read_csv(markers)
+            markers = pd.read_csv(markers, **kwargs)
         elif not isinstance(markers, DataFrame):
             raise ValueError("Unsupported datatype for markers!")
 
@@ -192,14 +198,12 @@ class CycSession(Session):
             self.insert_sample_markers(sample_id, markers, **kwargs)
             if not dry_run:
                 self.commit()
-                log.info("Adding sample complex completed!")
             else:
                 self.rollback()
+            log.info("Adding sample complex completed!")
         except Exception:
             self.rollback()
             raise
-        finally:
-            self.close()
 
     ###################################################
     #              Data Removal
@@ -259,6 +263,59 @@ class CycSession(Session):
         self.query(Sample_Marker_Association).delete()
 
         self.commit()
+
+    ###################################################
+    #              Data update
+    ###################################################
+    def update_sample_feature_list(self, sample, cells, **kwargs):
+        """ Standalone util to update feature list for a sample.
+
+        Parameters
+        ----------
+        sample: dict or Sample object.
+        cells: str or pandas.DataFrame object.
+            If str, it's path string to a csv file.
+        kwargs: keywords parameter.
+            Addtional parameters used `pd.read_csv`.
+        """
+        if isinstance(cells, str):
+            cells = pd.read_csv(cells, **kwargs)
+        elif not isinstance(cells, DataFrame):
+            raise ValueError("Unsupported datatype for cells!")
+
+        if isinstance(sample, Sample):
+            name = sample.name
+            tag = sample.tag
+        elif isinstance(sample, dict):
+            name = sample['name']
+            tag = sample.get('tag', None)
+        else:
+            raise ValueError("Unsupported data type for `sample`!")
+
+        if not hasattr(self, 'data_frame'):
+            self.load_dataframe_util()
+        cells.columns = cells.columns.map(self.data_frame.header_to_dbcolumn)
+        feature_list = ','.join(list(cells.columns))
+
+        query = self.query(Sample)\
+            .filter(func.lower(Sample.name) == name.lower())\
+            .filter((Sample.tag == tag)
+                    | (func.lower(Sample.tag) == str(tag).lower()))\
+
+        if not query.first():
+            raise Exception("Update database failed. No matching sample "
+                            "was found!")
+
+        try:
+            query.update(dict(feature_list=feature_list),
+                         synchronize_session=False)
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+
+        log.info("Update feature list for sample `%s`: %s"
+                 % (sample, feature_list))
 
     ###################################################
     #              Data Query
@@ -372,6 +429,11 @@ class CycSession(Session):
 
     def list_markers(self, detailed=False):
         """ List all the markers stored in database.
+
+        Parameters
+        ----------
+        detailed: bool, default is False.
+            If True, return a dict for each marker.
 
         Returns
         -------

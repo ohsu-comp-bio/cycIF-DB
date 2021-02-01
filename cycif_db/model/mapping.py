@@ -36,6 +36,7 @@ class Sample(Base):
     tag = Column(String)
     annotation = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
+    feature_list = Column(String)
 
     cells = relationship('Cell', back_populates='sample')
     markers = relationship('Sample_Marker_Association',
@@ -99,6 +100,7 @@ class Cell(Base):
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample = relationship("Sample", back_populates="cells")
+    feature_columns = []
 
     def __repr__(self):
         return "<Cell(sample={}, sample_cell_id={})>"\
@@ -110,12 +112,14 @@ for ftr in KNOWN_MARKERS['other_features']:
     if ftr == 'sample_cell_id':
         continue
     setattr(Cell, ftr, Column(Numeric(15, 4)))
+    Cell.feature_columns.append(ftr)
 
 
 for mkr in KNOWN_MARKERS['markers']:
     mkr = mkr.lower()
     setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 4)))
     setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 4)))
+    Cell.feature_columns.extend([mkr+'__cell_masks', mkr+'__nuclei_masks'])
 
 
 def init(engine):

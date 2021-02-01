@@ -142,3 +142,4 @@ def format_marker(name):
     rval = name.lower()
     rval = ''.join(rval.split())
     rval = rval.replace('-', '_')
+    return rval
