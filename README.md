@@ -61,11 +61,36 @@ or
 python scripts/add_sample_complex.py "{sample_name}__{tag}" {path_to_cells} {path_to_markers}
 ```
 ##
-##### Python APIs
+#### Python APIs
+
+##### Construct session object
+
 ```
 from cycif_db import CycSession
 
-# list all samples
-with CycSession() as csess:
-    sample_list = csess.list_samples(detailed=False)
+csess = CycSession()
+```
+
+##### List samples
+
+```
+sample_list = csess.list_samples(detailed=False)
+```
+
+##### Output a pandas DataFrame for all quantification features associated a sample
+
+```
+df = csess.get_cells_for_sample(sample/sample_id, to_path=None)
+```
+
+##### Output a pandas DataFrame for all common features associated with multiple samples.
+
+```
+df = csess.get_cells_from_samples(sample_list/sample_id_list, column_filter='intersection', to_path=None)
+```
+
+##### Close session object
+
+```
+csess.close()
 ```
