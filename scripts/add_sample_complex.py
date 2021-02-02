@@ -41,6 +41,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 folder = args.dir
+sample_annotation = ''
 
 if folder:
     folder = pathlib.Path(folder)

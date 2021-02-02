@@ -3,6 +3,7 @@
 import logging
 import pandas as pd
 
+from collections.abc import Iterable
 from pandas import DataFrame
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -443,3 +444,177 @@ class CycSession(Session):
         if detailed:
             marker_list = [item.__dict__ for item in marker_list]
         return marker_list
+
+    def get_sample(self, id=None, name=None, tag=None):
+        """ get a Sample object
+
+        Parameters
+        ----------
+        id: int or None.
+            Index of sample in database.
+            Ignoring `name` and `tag` if this one is provided.
+        name: str or None.
+            Name of sample, ignoring cases. One of `id` and `name` must
+            be provided.
+        tag: str or None.
+            Tag of the sample, ignoring cases.
+
+        Returns
+        -------
+        Sample object.
+        """
+        if not isinstance(id, (int, None)):
+            raise ValueError("Invalid `id` was provided. The argument "
+                             "must be int or None!")
+        if isinstance(id, int):
+            sample = self.query(Sample).filter_by(id=id).first()
+        elif name:
+            sample = self.query(Sample) \
+                .filter(func.lower(Sample.name) == name.lower()) \
+                .filter((Sample.tag == tag)
+                        | (func.lower(Sample.tag) == str(tag).lower())) \
+                .first()
+        else:
+            raise ValueError("Neither `id` nor `name` was provided!")
+
+        log.info(f"Retrived sample: {sample}!")
+
+    def get_cells_for_sample(self, sample=None, name=None, tag=None,
+                             to_path=None, **kwargs):
+        """ Retrieve all cells for a sample and convert to pandas DataFrame.
+
+        Parameters
+        ----------
+        sample: `Sample` object or int.
+            If int, it's the index of sample in database.
+            Ignoring `name` and `tag` if this one is provided.
+        name: str or None.
+            Name of the sample, ignoring cases. One of `sample` and `name` must
+            be provided.
+        tag: str or None.
+            Tag of the sample, ignoring cases.
+        to_path: str, default is None.
+            If provided, this is the path to save the cells data.
+        kwargs: Key words arguments
+            Used in pandas dataframe `to_csv`.
+
+        Returns
+        -------
+        pandas DataFrame object.
+        """
+        if not isinstance(sample, (int, Sample)):
+            raise ValueError("The argument `sample` was provided, but it "
+                             "was not a valid Sample object!")
+        if not isinstance(sample, Sample):
+            sample = self.get_sample(id=sample, name=name, tag=tag)
+
+        assert sample, ("No matching record found for the sample!")
+
+        feature_list = sample.feature_list.split(',')
+        feature_list = sorted(feature_list, key=column_sort_key)
+        feature_columns = [getattr(Cell, col) for col in feature_list]
+
+        data = self.query(Sample.name, Sample.tag, *feature_columns)\
+            .join(Sample) \
+            .filter(Cell.sample_id == sample.id).all()
+
+        df = pd.DataFrame(
+            data,
+            columns=['sample_name', 'sample_tag']+feature_list)
+
+        if to_path:
+            df.to_csv(to_path, **kwargs)
+
+        return df
+
+    def get_cells_from_samples(self, samples=None, names=None, tags=None,
+                               column_filter='intersection', to_path=None,
+                               **kwargs):
+        """ Retrieve all cells data for a list of samples and convert to
+            pandas DataFrame.
+
+        Parameters
+        ----------
+        samples: iterable of `Sample` objects or ints.
+            If int, these are the indices of samples in database.
+            Ignoring `name` and `tag` if this one is provided.
+        names: list/tuple of str or None.
+            Name of the sample, ignoring cases. One of `sample` and `names`
+            must be provided.
+        tags: list/tuple of str or None.
+            Tag of the sample, ignoring cases.
+        column_filter: str
+            One of ['intersection', 'union'].
+        to_path: str, default is None.
+            If provided, this is the path to save the cells data.
+        kwargs: Key words arguments
+            Used in pandas dataframe `to_csv`.
+
+        Returns
+        -------
+        pandas DataFrame object.
+        """
+        if not isinstance(samples, (Iterable, None)):
+            raise ValueError("The samples provided, `{samples}`, are not "
+                             "iterable or None.")
+
+        if column_filter not in ('intersection', 'union'):
+            raise ValueError("Argument `column_filter` must be one of "
+                             "['intersection', 'union'], but got "
+                             "`{}`!".format(column_filter))
+
+        if samples:
+            if isinstance(samples[0], int):
+                samples = [self.get_sample(id) for id in samples]
+            elif not isinstance(samples[0], Sample):
+                raise ValueError(
+                    "The element of `samples` must be either int or Sample "
+                    "object, but got `{samples[0]}`!")
+        elif names:
+            if not isinstance(names, (list, tuple)):
+                raise ValueError("The argument `names` requires list or tuple "
+                                 "data type! `{names}` was not valid!")
+            if not tags:
+                tags = [None]
+            if len(tags) < len(names):
+                tags.extend([None] * (len(names) - len(tags)))
+            samples = [self.get_sample(name=name, tag=tag)
+                       for name, tag in zip(names, tags)]
+        else:
+            raise ValueError("One of the `samples` and `names` must be "
+                             "provided!")
+
+        feature_lists = [sample.feature_list.split(',') for sample in samples]
+        feature_lists = [set(x) for x in feature_lists]
+        if column_filter == 'intersection':
+            feature_list = set.intersection(*feature_lists)
+        else:
+            feature_list = set.union(*feature_lists)
+
+        feature_list = sorted(list(feature_list), key=column_sort_key)
+
+        feature_columns = [getattr(Cell, col) for col in feature_list]
+        sample_ids = [sample.id for sample in samples]
+
+        data = self.query(Sample.name, Sample.tag, *feature_columns)\
+            .join(Sample) \
+            .filter(Cell.sample_id.in_(sample_ids)).all()
+
+        df = pd.DataFrame(
+            data,
+            columns=['sample_name', 'sample_tag']+feature_list)
+
+        if to_path:
+            df.to_csv(to_path, **kwargs)
+
+        return df
+
+
+def column_sort_key(column):
+    """ util for sort columns.
+    """
+    if column.endswith('_id'):
+        return '0' + column
+    if column.endswith('_masks'):
+        return '1' + column
+    return column
