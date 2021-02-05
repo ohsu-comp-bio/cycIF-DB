@@ -25,8 +25,8 @@ def test_header_to_dbcolumn():
     new = headers.map(CycDataFrame().header_to_dbcolumn)
 
     assert list(new) == [
-        'sample_cell_id', 'area', 'cd45_1__cell_masks',
-        'dapi_1__nuclei_masks'], new
+        'sample_cell_id', 'area', 'cd45:::1__cell_masks',
+        'dapi:::1__nuclei_masks'], new
 
 
 def test_header_to_marker():

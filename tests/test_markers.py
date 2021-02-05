@@ -15,15 +15,15 @@ def test_load_known_markers():
 
     print(markers)
     assert 'asma' in markers
-    assert markers['asma'] == 'alpha_SMA'
+    assert markers['asma'] == 'aSMA'
 
     assert 'area' in other_features
     assert other_features['area'] == 'area'
 
 
 def test_get_dbname():
-    assert cyc_markers.get_dbname('aSMA') == 'alpha_SMA'
-    assert cyc_markers.get_dbname('alpha-SMA') == 'alpha_SMA'
+    assert cyc_markers.get_dbname('aSMA') == 'aSMA'
+    assert cyc_markers.get_dbname('alpha-SMA') == 'aSMA'
 
     assert cyc_markers.get_dbname('Area') == 'area'
     assert cyc_markers.get_dbname('cellID') == 'sample_cell_id'
@@ -66,7 +66,8 @@ def test_update_stock_markers():
         other_features['test2']
 
     assert len(cyc_markers.markers) - len(o_markers) == 6
-    assert markers['CD3'] == ['CD3', 'CD3a', 'CD3b'], markers['CD3']
+    assert markers['CD3'] == ['CD3', 'anti_CD3', 'CD3a', 'CD3b'], \
+        markers['CD3']
     assert markers['ABC_1'] == ['ABC-1'], markers['ABC_1']
     assert markers['ABC_2'] == ['ABC-2', 'ABC2']
     assert markers['CK14'] == ['CK14', 'CK_14', 'CK-14', 'CK14a'], \
