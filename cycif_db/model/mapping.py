@@ -31,7 +31,7 @@ Base = declarative_base()
 class Sample(Base):
     __tablename__ = 'sample'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, nullable=False)
     tag = Column(String)
     annotation = Column(String)
@@ -56,11 +56,11 @@ Index('ix_sample_name', Sample.name, Sample.tag, unique=True)
 class Marker(Base):
     __tablename__ = 'marker'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    fluor = Column(Integer)
-    anti = Column(String)
-    replicate = Column(Integer)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(String, unique=True)
+    fluor = Column(Integer, unique=True)
+    anti = Column(String, unique=True)
+    replicate = Column(Integer, unique=True)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample_associates = relationship('Sample_Marker_Association',
@@ -76,7 +76,7 @@ class Marker(Base):
 
 
 Index('ix_marker_name', Marker.name, Marker.fluor, Marker.anti,
-      Marker.replicate, unique=True)
+      Marker.replicate)
 
 
 class Sample_Marker_Association(Base):
