@@ -7,10 +7,10 @@ import logging
 import os
 
 from sqlalchemy import Column, ForeignKey, func, Index
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import (
-    Boolean,
     DateTime,
     Integer,
     Numeric,
@@ -29,55 +29,69 @@ Base = declarative_base()
 
 
 class Sample(Base):
-    __tablename__ = 'samples'
+    __tablename__ = 'sample'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     tag = Column(String)
     annotation = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
-    feature_list = Column(String)
 
     cells = relationship('Cell', back_populates='sample')
-    markers = relationship('Sample_Marker_Association',
-                           back_populates='sample')
+    markers = relationship('Marker',
+                           secondary='sample_marker_association',
+                           back_populates='samples',
+                           cascade="all, delete-orphan")
+    marker_associates = relationship('Sample_Marker_Association',
+                                     back_populates='sample')
 
     def __repr__(self):
-        return "<Sample(name='{}', tag='{}')>".format(self.name, self.tag)
+        return "<Sample({}: '{}', '{}')>".format(
+            self.id, self.name, self.tag)
 
 
 Index('ix_sample_name', Sample.name, Sample.tag, unique=True)
 
 
 class Marker(Base):
-    __tablename__ = 'markers'
+    __tablename__ = 'marker'
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    fluor = Column(Integer)
+    anti = Column(String)
+    replicate = Column(Integer)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    samples = relationship('Sample_Marker_Association',
-                           back_populates='marker')
+    sample_associates = relationship('Sample_Marker_Association',
+                                     back_populates='marker')
+    samples = relationship('Sample',
+                           secondary='sample_marker_association',
+                           back_populates='markers',
+                           passive_deletes=True)
 
     def __repr__(self):
-        return "<Marker(name='{}')>".format(self.name)
+        return "<Marker({}, '{}', '{}', '{}', '{}')>".format(
+            self.id, self.name, self.fluor, self.anti, self.replicate)
 
 
-Index('ix_marker_name', Marker.name, unique=True)
+Index('ix_marker_name', Marker.name, Marker.fluor, Marker.anti,
+      Marker.replicate, unique=True)
 
 
 class Sample_Marker_Association(Base):
     __tablename__ = 'sample_marker_association'
 
     id = Column(Integer, primary_key=True)
-    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"))
-    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE"))
+    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE",
+                                           onupdate="CASCADE"))
+    marker_id = Column(Integer, ForeignKey("markers.id", onupdate="CASCADE"))
     channel_number = Column(Integer)
     cycle_number = Column(Integer)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    sample = relationship("Sample", back_populates="markers")
-    marker = relationship("Marker", back_populates="samples")
+    sample = relationship("Sample", back_populates="marker_associates")
+    marker = relationship("Marker", back_populates="sample_associates")
 
     def __repr__(self):
         return "<Sample_Marker_Association(sample={}, marker={})>"\
@@ -91,16 +105,16 @@ Index('ix_sample_marker_associate',
 
 
 class Cell(Base):
-    __tablename__ = 'cells'
+    __tablename__ = 'cell'
 
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
-                       nullable=False)
+                       onupdate='CASCADE', nullable=False)
     sample_cell_id = Column(Integer)     # local experiment ID
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
+    features = Column(JSONB)
 
     sample = relationship("Sample", back_populates="cells")
-    feature_columns = []
 
     def __repr__(self):
         return "<Cell(sample={}, sample_cell_id={})>"\
@@ -112,14 +126,6 @@ for ftr in KNOWN_MARKERS['other_features']:
     if ftr == 'sample_cell_id':
         continue
     setattr(Cell, ftr, Column(Numeric(15, 4)))
-    Cell.feature_columns.append(ftr)
-
-
-for mkr in KNOWN_MARKERS['markers']:
-    mkr = mkr.lower()
-    setattr(Cell, mkr+'__cell_masks', Column(Numeric(15, 4)))
-    setattr(Cell, mkr+'__nuclei_masks', Column(Numeric(15, 4)))
-    Cell.feature_columns.extend([mkr+'__cell_masks', mkr+'__nuclei_masks'])
 
 
 def init(engine):
