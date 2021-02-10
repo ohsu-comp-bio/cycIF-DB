@@ -1,14 +1,17 @@
 """ Utilies to uniform marker names
 """
-import json
 import logging
+import numpy as np
+import pandas as pd
 import pathlib
+
+from ..model.mapping import Marker, OTHER_FEATHERS
 
 
 log = logging.getLogger(__name__)
 
 module = pathlib.Path(__file__).absolute().parent
-PATH_TO_MARKERS = str(pathlib.Path.joinpath(module, 'markers.json'))
+PATH_TO_MARKERS = str(pathlib.Path.joinpath(module, 'markers.tsv'))
 
 
 class Markers(object):
@@ -26,108 +29,121 @@ class Markers(object):
         else:
             self._path = PATH_TO_MARKERS
 
+        markers_df = pd.read_csv(self._path, sep='\t').fillna('')
+
+        self._check_duplicate(markers_df)
         self._load_stock_markers()
+
+    def _check_duplicate(self, df):
+        """ check marker duplicate.
+        """
+        self.unique_keys = \
+            [c.name for c in Marker.__table__.columns if c.unique]
+        # check uniqueness of all stock markers
+        duplicate_markers = df.duplicated(subset=self.unique_keys, keep=False)
+        if duplicate_markers.any():
+            raise Exception("Duplicate markers found in `markers.tsv`: %s"
+                            % df[duplicate_markers])
+        log.info("Loaded %d unique stock markers." % df.shape[0])
+        self.markers_df = df
 
     def _load_stock_markers(self):
         """ Load `markers.json` into python dictinary and convert to
         alias: db_name format.
         """
-        with open(self._path, 'r') as fp:
-            markers_n_features = json.load(fp)
-
-        markers = markers_n_features['markers']
-        log.info("Loaded %d unique DB column names for markers."
-                 % len(markers))
-        self.markers = {name.lower(): k for k, v in markers.items()
-                        for name in v}
-        log.info("Converted to %d pairs of `db_keyword: marker_name`."
+        self.markers = {alias.lower().strip(): i for i, v in enumerate(
+                        self.markers_df['aliases']) for alias in v.split(';')}
+        log.info("Converted to %d pairs of `marker: db_marker`."
                  % len(self.markers))
 
-        other_features = markers_n_features['other_features']
+        other_features = OTHER_FEATHERS
         log.info("Loaded %d unique DB column names for non-marker features."
                  % len(other_features))
         self.other_features = \
             {name.lower(): k for k, v in other_features.items()
              for name in v}
 
-    def get_dbname(self, name):
-        """ Get the name used in database for a marker, support various
+    def get_marker_db_entry(self, marker):
+        """ Get database ingestion entry for a marker, support various
         alias names.
 
         Parameters
         ----------
-        name: str
+        marker: str
             The name of a marker, which can be common name or alias.
 
         Returns
         ----------
-        str, or None if the name doesn't exist in the `markers.json` file.
+        Tuple, or None if the name doesn't exist in the `markers.tsv` file.
+        """
+        marker = format_marker(marker)
+
+        id = self.markers.get(marker, None)
+        if id is None:
+            log.warn(f"The marker name `{marker}` was not recognized!")
+            return
+
+        rval = tuple(self.markers_df.loc[id, self.unique_keys]
+                     .replace({'': None}))
+        return rval
+
+    def get_other_feature_db_name(self, name):
+        """ Get formatted database name to a non-marker features.
+
+        Parameters
+        ----------
+        name: str
+            The name of a non-marker feature.
+
+        Returns
+        ----------
+        str, or None if the name doesn't exist self.other_features.
         """
         name = format_marker(name)
 
-        rval = self.markers.get(name, None)
-        if rval is None:
-            rval = self.other_features.get(name, None)
-            if rval is None:
-                log.warn(f"The marker name `{name}` was not recognized!")
+        rval = self.other_features.get(name, None)
+        if not rval:
+            log.warn(f"The feature name `{name}` was not recognized!")
         return rval
 
-    def update_stock_markers(self, new_markers, new_others=None,
-                             toplace=None, reload=False):
-        """ Check whether a cycIF quantification result is compatible
-        with database.
+    def update_stock_markers(self, new_markers, toplace=None, reload=False):
+        """ Update `markers.tsv`.
 
         Arguments
         ---------
-        new_markers: dict.
-            In {db_keywords: marker, ...} format.
-        new_others: None or dict, default is None.
-            In {db_keywords: marker, ...} format.
+        new_markers: tuple, list or list of lists.
+            In (name, fluor, anti, replicate, aliases) format.
         toplace: None or str, default is None.
-            The path to save the updated marker/feature list. When toplace
+            The path to save the updated marker dataframe. When toplace
             is None, it's the original path + '.new'.
         reload: boolean, default is False.
             Whether to reload the updated markers/features.
         """
-        if not isinstance(new_markers, dict):
-            raise ValueError("`new_markers` must be dict datatype instead!")
-        if not new_others:
-            new_others = {}
-        if not isinstance(new_others, dict):
-            raise ValueError("The datatype of `new_others` is not supported!")
+        if not isinstance(new_markers, (list, tuple)):
+            raise ValueError("`new_markers` must be list, tuple or list of "
+                             "lists datatype!")
+        if not isinstance(new_markers[0], (list, tuple)):
+            new_markers = [new_markers]
 
-        with open(self._path, 'r') as fp:
-            markers_n_features = json.load(fp)
-
-        for k, v in new_markers.items():
-            if k in markers_n_features['markers']:
-                if isinstance(v, list):
-                    markers_n_features['markers'][k].extend(v)
-                else:
-                    markers_n_features['markers'][k].append(v)
+        df = self.markers_df.copy()
+        start = df.shape[0]
+        for i, mkr in enumerate(new_markers):
+            marker_mask = [(df.loc[:, x] == (y or ''))
+                           for x, y in zip(self.unique_keys, mkr)]
+            marker_mask = np.logical_and.reduce(marker_mask)
+            if marker_mask.any():
+                for alias in mkr[-1].split(';'):
+                    if format_marker(alias) not in self.markers:
+                        df.loc[marker_mask, 'aliases'] += '; ' + alias
             else:
-                if isinstance(v, list):
-                    markers_n_features['markers'][k] = v
-                else:
-                    markers_n_features['markers'][k] = [v]
+                df.loc[start+i] = mkr
 
-        for k, v in new_others.items():
-            if k in markers_n_features['other_features']:
-                if isinstance(v, list):
-                    markers_n_features['other_features'][k].extend(v)
-                else:
-                    markers_n_features['other_features'][k].append(v)
-            else:
-                if isinstance(v, list):
-                    markers_n_features['other_features'][k] = v
-                else:
-                    markers_n_features['other_features'][k] = [v]
+        self._check_duplicate(df)
 
         if not toplace:
             toplace = self._path + '.new'
 
-        with open(toplace, 'w') as fp:
-            json.dump(markers_n_features, fp, indent=4, sort_keys=True)
+        df.to_csv(toplace, sep='\t', index=False)
 
         if reload:
             self._path = toplace

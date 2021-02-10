@@ -18,12 +18,23 @@ from sqlalchemy.types import (
 )
 
 
-log = logging.getLogger(__name__)
+OTHER_FEATHERS = {
+    "area": ["Area"],
+    "column_centroid": ["column_centroid"],
+    "eccentricity": ["Eccentricity"],
+    "extent": ["Extent"],
+    "major_axis_length": ["MajorAxisLength"],
+    "minor_axis_length": ["MinorAxisLength"],
+    "orientation": ["Orientation"],
+    "row_centroid": ["row_centroid"],
+    "sample_cell_id": ["CellID"],
+    "solidity": ["Solidity"],
+    "x_centroid": ["X_centroid"],
+    "y_centroid": ["Y_centroid"]
+    }
 
-MARKERS_PATH = os.path.join(os.path.dirname(__file__),
-                            os.pardir, 'markers', 'markers.json')
-with open(MARKERS_PATH, 'r') as fp:
-    KNOWN_MARKERS = json.load(fp)
+
+log = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -121,7 +132,7 @@ class Cell(Base):
             .format(self.sample, self.sample_cell_id)
 
 
-for ftr in KNOWN_MARKERS['other_features']:
+for ftr in OTHER_FEATHERS:
     ftr = ftr.lower()
     if ftr == 'sample_cell_id':
         continue
