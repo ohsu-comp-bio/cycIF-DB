@@ -93,7 +93,7 @@ class Marker_Alias(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE",
+    marker_id = Column(Integer, ForeignKey("marker.id", ondelete="CASCADE",
                                            onupdate="CASCADE"))
 
 
@@ -104,9 +104,9 @@ class Sample_Marker_Association(Base):
     __tablename__ = 'sample_marker_association'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE",
+    sample_id = Column(Integer, ForeignKey("sample.id", ondelete="CASCADE",
                                            onupdate="CASCADE"))
-    marker_id = Column(Integer, ForeignKey("markers.id", onupdate="CASCADE"))
+    marker_id = Column(Integer, ForeignKey("marker.id", onupdate="CASCADE"))
     channel_number = Column(Integer)
     cycle_number = Column(Integer)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -129,7 +129,7 @@ class Cell(Base):
     __tablename__ = 'cell'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
+    sample_id = Column(Integer, ForeignKey("sample.id", ondelete="CASCADE"),
                        onupdate='CASCADE', nullable=False)
     sample_cell_id = Column(Integer)     # local experiment ID
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
