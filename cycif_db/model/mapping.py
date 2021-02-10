@@ -2,9 +2,7 @@
 Data model classes
 
 """
-import json
 import logging
-import os
 
 from sqlalchemy import Column, ForeignKey, func, Index
 from sqlalchemy.dialects.postgresql import JSONB
@@ -43,8 +41,8 @@ class Sample(Base):
     __tablename__ = 'sample'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, nullable=False)
-    tag = Column(String)
+    name = Column(String, nullable=False, unique=True)
+    tag = Column(String, unique=True)
     annotation = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -61,7 +59,7 @@ class Sample(Base):
             self.id, self.name, self.tag)
 
 
-Index('ix_sample_name', Sample.name, Sample.tag, unique=True)
+Index('ix_sample_name', Sample.name, Sample.tag)
 
 
 class Marker(Base):
@@ -90,10 +88,22 @@ Index('ix_marker_name', Marker.name, Marker.fluor, Marker.anti,
       Marker.replicate)
 
 
+class Marker_Alias(Base):
+    __tablename__ = 'marker_alias'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    marker_id = Column(Integer, ForeignKey("markers.id", ondelete="CASCADE",
+                                           onupdate="CASCADE"))
+
+
+Index('ix_marker_alias', Marker_Alias.name)
+
+
 class Sample_Marker_Association(Base):
     __tablename__ = 'sample_marker_association'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE",
                                            onupdate="CASCADE"))
     marker_id = Column(Integer, ForeignKey("markers.id", onupdate="CASCADE"))
@@ -118,7 +128,7 @@ Index('ix_sample_marker_associate',
 class Cell(Base):
     __tablename__ = 'cell'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     sample_id = Column(Integer, ForeignKey("samples.id", ondelete="CASCADE"),
                        onupdate='CASCADE', nullable=False)
     sample_cell_id = Column(Integer)     # local experiment ID
