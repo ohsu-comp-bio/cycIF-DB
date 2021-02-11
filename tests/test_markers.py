@@ -24,10 +24,10 @@ def test_load_known_markers():
 
 def test_get_marker_db_entry():
     assert cyc_markers.get_marker_db_entry('aSMA') == \
-        ('aSMA', None, None, None), \
+        ('aSMA', '', '', ''), \
         cyc_markers.get_marker_db_entry('aSMA')
     assert cyc_markers.get_marker_db_entry('alpha-SMA') == \
-        ('aSMA', None, None, None), \
+        ('aSMA', '', '', ''), \
         cyc_markers.get_marker_db_entry('alpha-SMA')
 
 

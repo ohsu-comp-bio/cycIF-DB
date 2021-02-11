@@ -29,7 +29,7 @@ class Markers(object):
         else:
             self._path = PATH_TO_MARKERS
 
-        markers_df = pd.read_csv(self._path, sep='\t').fillna('')
+        markers_df = pd.read_csv(self._path, sep='\t', dtype=str).fillna('')
 
         self._check_duplicate(markers_df)
         self._load_stock_markers()
@@ -83,8 +83,7 @@ class Markers(object):
             log.warn(f"The marker name `{marker}` was not recognized!")
             return
 
-        rval = tuple(self.markers_df.loc[id, self.unique_keys]
-                     .replace({'': None}))
+        rval = tuple(self.markers_df.loc[id, self.unique_keys])
         return rval
 
     def get_other_feature_db_name(self, name):

@@ -34,9 +34,12 @@ class CycDataFrame(object):
         for k, v in HEADER_SUFFIX_MAPPING.items():
             marker, count = re.subn(k, '', st, flags=re.I)
             if count:
-                return self.stock_markers.get_dbname(marker).lower() + v
+                rval = self.stock_markers.get_marker_db_entry(marker)
+                rval = [x.strip() for x in rval]
+                rval = ':'.join(rval).strip(':')
+                return rval.lower() + v
 
-        return self.stock_markers.get_dbname(st).lower()
+        return self.stock_markers.get_other_feature_db_name(st).lower()
 
     def check_feature_compatibility(self, cells_data, markers_data, **kwargs):
         """ Check whether markers in cells table matches marker names
@@ -72,15 +75,16 @@ class CycDataFrame(object):
         markers_in_cells, others = get_headers_categorized(cells_data)
         markers_in_cells = [header_to_marker(mkr) for mkr in markers_in_cells]
 
-        unknown_markers = [mkr for mkr in markers_in_cells
-                           if self.stock_markers.get_dbname(mkr) is None]
+        unknown_markers = [mkr for mkr in markers_in_cells if
+                           self.stock_markers.get_marker_db_entry(mkr) is None]
         unknown_markers = set(unknown_markers)
 
-        unknown_others = [mkr for mkr in others
-                          if self.stock_markers.get_dbname(mkr) is None]
+        unknown_others = [mkr for mkr in others if
+                          self.stock_markers.get_other_feature_db_name(mkr)
+                          is None]
         unknown_others = set(unknown_others)
 
-        m_markers = markers_data.map(self.stock_markers.get_dbname)
+        m_markers = markers_data.map(self.stock_markers.get_marker_db_entry)
         unknown_m_markers = []
         for i, mkr in enumerate(markers_data):
             if m_markers[i] is None:
@@ -105,8 +109,9 @@ class CycDataFrame(object):
 
         m_markers_set = set(m_markers)
         markers_set_in_cells = set(markers_in_cells)
-        diff1 = [mkr for mkr in markers_set_in_cells
-                 if self.stock_markers.get_dbname(mkr) not in m_markers_set]
+        diff1 = [mkr for mkr in markers_set_in_cells if
+                 self.stock_markers.get_marker_db_entry(mkr)
+                 not in m_markers_set]
 
         if diff1:
             log.warn(
