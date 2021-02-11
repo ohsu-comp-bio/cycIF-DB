@@ -15,7 +15,9 @@ from cycif_db.utils import get_configs
 
 
 # use cycif_db url configs to replace url in alembic.ini
-url = get_configs()['db_url']
+url = os.environ.get('db_url', None)
+if not url:
+    url = get_configs()['db_url']
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

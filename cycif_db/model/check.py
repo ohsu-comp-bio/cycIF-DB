@@ -1,5 +1,5 @@
 import logging
-import os.path
+import os
 import sys
 
 from alembic import command, config
@@ -142,7 +142,9 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     """ Create database using alembic APIs
     """
     configs = get_configs()
-    if url is None:
+    if url:
+        os.environ['db_url'] = url
+    else:
         url = configs['db_url']
     if auto_migrate is None:
         auto_migrate = configs['auto_migrate']
@@ -166,6 +168,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     def migrate_to_head():
         with engine.begin() as connection:
             alembic_cfg.attributes['connection'] = connection
+            print('command.upgrade')
             command.upgrade(alembic_cfg, 'head')
 
     def migrate_from_scratch():
@@ -176,6 +179,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     if new_database:
         migrate_from_scratch()
     elif auto_migrate:
+        print('migrate_to_head')
         migrate_to_head()
 
     script = ScriptDirectory.from_config(alembic_cfg)
@@ -189,7 +193,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
         return
     expect_msg = "Your database has reversion '%s' but this code expects "\
                  "version '%s'" % (current_version, script_head)
-    if int(current_version) > int(script_head):
+    if int(current_version or 0) > int(script_head):
         cmd_msg = "alembic downgrade %s" % script_head
     else:
         cmd_msg = "alembic upgrade head"
