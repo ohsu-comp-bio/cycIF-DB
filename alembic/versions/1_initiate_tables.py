@@ -21,10 +21,10 @@ def upgrade():
     op.create_table(
         'marker',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('name', sa.String(), nullable=True),
-        sa.Column('fluor', sa.Integer(), nullable=True),
+        sa.Column('name', sa.String(), nullable=False),
+        sa.Column('fluor', sa.String(), nullable=True),
         sa.Column('anti', sa.String(), nullable=True),
-        sa.Column('replicate', sa.Integer(), nullable=True),
+        sa.Column('replicate', sa.String(), nullable=True),
         sa.Column('entry_at', sa.DateTime(timezone=True),
                   server_default=sa.func.current_timestamp(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
@@ -34,7 +34,9 @@ def upgrade():
         sa.UniqueConstraint('replicate')
     )
     op.create_index('ix_marker_name', 'marker',
-                    ['name', 'fluor', 'anti', 'replicate'], unique=False)
+                    [sa.text('lower(name)'), sa.text('lower(fluor)'),
+                     sa.text('lower(anti)'), sa.text('lower(replicate)')],
+                    unique=True)
     op.create_table(
         'sample',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -47,7 +49,8 @@ def upgrade():
         sa.UniqueConstraint('name'),
         sa.UniqueConstraint('tag')
     )
-    op.create_index('ix_sample_name', 'sample', ['name', 'tag'], unique=False)
+    op.create_index('ix_sample_name', 'sample',
+                    [sa.text('lower(name)'), sa.text('lower(tag)')], unique=True)
     op.create_table(
         'cell',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -80,7 +83,8 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name')
     )
-    op.create_index('ix_marker_alias', 'marker_alias', ['name'], unique=False)
+    op.create_index('ix_marker_alias', 'marker_alias',
+                    [sa.text('lower(name)')], unique=True)
     op.create_table(
         'sample_marker_association',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),

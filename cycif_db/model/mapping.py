@@ -59,17 +59,18 @@ class Sample(Base):
             self.id, self.name, self.tag)
 
 
-Index('ix_sample_name', Sample.name, Sample.tag)
+Index('ix_sample_name', func.lower(Sample.name), func.lower(Sample.tag),
+      unique=True)
 
 
 class Marker(Base):
     __tablename__ = 'marker'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, unique=True)
-    fluor = Column(Integer, unique=True)
+    name = Column(String, unique=True, nullable=False)
+    fluor = Column(String, unique=True)
     anti = Column(String, unique=True)
-    replicate = Column(Integer, unique=True)
+    replicate = Column(String, unique=True)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample_associates = relationship('Sample_Marker_Association',
@@ -84,8 +85,8 @@ class Marker(Base):
             self.id, self.name, self.fluor, self.anti, self.replicate)
 
 
-Index('ix_marker_name', Marker.name, Marker.fluor, Marker.anti,
-      Marker.replicate)
+Index('ix_marker_name', func.lower(Marker.name), func.lower(Marker.fluor),
+      func.lower(Marker.anti), func.lower(Marker.replicate), unique=True)
 
 
 class Marker_Alias(Base):
@@ -97,7 +98,7 @@ class Marker_Alias(Base):
                                            onupdate="CASCADE"))
 
 
-Index('ix_marker_alias', Marker_Alias.name)
+Index('ix_marker_alias', func.lower(Marker_Alias.name), unique=True)
 
 
 class Sample_Marker_Association(Base):
