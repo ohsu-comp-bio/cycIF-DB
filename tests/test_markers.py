@@ -15,7 +15,7 @@ def test_load_known_markers():
 
     print(markers)
     assert 'asma' in markers
-    assert markers['asma'] == 266
+    assert markers['asma'] == 268, markers['asma']
 
     assert 'area' in other_features
     assert other_features['area'] == 'area'
@@ -45,9 +45,9 @@ def test_update_stock_markers():
     new_markers = [
         ('ABC1', None, None, 1, 'ABC_1'),
         ('ABC1', 'eF660', None, None, 'ABC1_660'),
-        ('ABC_2', None, None, None, 'ABC-2; ABC2'),
+        ('ABC_2', None, None, None, 'ABC-2, ABC2'),
         ('CK14', None, None, None, 'CK14a'),
-        ('CD3', 'eF450', 'goat', None, 'CD3a; CD3b')
+        ('CD3', 'eF450', 'goat', None, 'CD3a, CD3b')
     ]
 
     with tempfile.NamedTemporaryFile() as tmp:
@@ -61,14 +61,15 @@ def test_update_stock_markers():
     assert cyc_markers._path == to_path
     assert len(other_features) == len(o_other_features), other_features
 
-    assert len(cyc_markers.markers) - len(o_markers) == 7
+    assert len(cyc_markers.markers) - len(o_markers) == 7, \
+        set(cyc_markers.markers.keys()) - set(o_markers.keys())
     entry = tuple(df.iloc[-2])
-    assert (entry) == ('ABC_2', '', '', '', 'ABC-2; ABC2'), entry
+    assert (entry) == ('ABC_2', '', '', '', 'ABC-2, ABC2'), entry
     entry = tuple(df.iloc[-1])
-    assert (entry) == ('CD3', 'eF450', 'goat', '', 'CD3a; CD3b'), entry
+    assert (entry) == ('CD3', 'eF450', 'goat', '', 'CD3a, CD3b'), entry
 
     masks = [df[x] == (y or '') for x, y in
              zip(cyc_markers.unique_keys, new_markers[-2])]
     masks = np.logical_and.reduce(masks)
     entry = list(df.loc[masks, 'aliases'])[-1]
-    assert (entry) == 'CK14; CK_14; CK-14; CK14a', entry
+    assert (entry) == 'CK14, CK_14, CK-14, CK14a', entry
