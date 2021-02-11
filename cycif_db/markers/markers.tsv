@@ -1,18 +1,18 @@
 name	fluor	anti	replicate	aliases
-14_3_3				14_3_3; 14-3-3
+14_3_3				14_3_3, 14-3-3
 4EBP1_pS65				4EBP1_pS65
 53BP1				53BP1
 5HMC				5HMC
-AF488				IgG_AF488; AF488
+AF488				IgG_AF488, AF488
 AF488			1	A488
 AF488		Goat_IgG		Goat_IgG_AF488
 AF488		Goat_anti-Rabbit_IgG		Goat_anti_Rabbit_IgG_AF488
-AF555				IgG_AF555; AF555
+AF555				IgG_AF555, AF555
 AF555			1	A555
 AF555		Donkey_IgG		Donkey_IgG_AF555
 AF555		Donkey_anti-Rabbit_IgG		Donkey_anti_Rabbit_IgG_AF555
 AF555		Goat_IgG		Goat_IgG_AF555
-AF647				IgG_AF647; AF647
+AF647				IgG_AF647, AF647
 AF647			1	A647
 AF647		Donkey_IgG		Donkey_IgG_AF647
 AF647		Donkey_anti-Mouse_IgG		Donkey_anti_Mouse_IgG_AF647
@@ -24,14 +24,14 @@ ATM_pS1981				ATM_pS1981
 ATR_pS428				ATR_pS428
 AXL				AXL
 Actin				Actin
-B7_H4				B7_H4; B7-H4
+B7_H4				B7_H4, B7-H4
 BMP2				BMP2
 BRCA1				BRCA1
 BRCA2				BRCA2
 Bax				Bax
 Bcl2				Bcl2
-Bcl_xL				Bcl_xL; Bcl-xL
-Beta_Catenin				Beta_Catenin; Beta-Catenin
+Bcl_xL				Bcl_xL, Bcl-xL
+Beta_Catenin				Beta_Catenin, Beta-Catenin
 CAV1				CAV1
 CCNA2				CCNA2
 CCND1				CCND1
@@ -47,21 +47,23 @@ CD2				CD2
 CD20				CD20
 CD20	488			CD20_488
 CD20P				CD20P
-CD3				CD3; anti_CD3
+CD3				CD3, anti_CD3
 CD31				CD31
 CD31	647			CD31_647
 CD3D				CD3D
 CD4				CD4
 CD44				CD44
-CD45				CD45; CD45_PE
+CD45				CD45, CD45_PE
 CD45			1	CD45_1
 CD45			2	CD45_2
-CD45R				CD45R; CD45R_B220; CD45R/B220; CD45R_eF570; CD45R_eFluor660
+CD45R				CD45R, CD45R_B220, CD45R/B220
+CD45R	eF570			CD45R_eF570
+CD45R	eF660			CD45R_eFluor660
 CD45R			1	CD45R_1
 CD45R			2	CD45R_2
 CD45RA				CD45RA
 CD45RB				CD45RB
-CD45RO				CD45RO; anti_CD45RO
+CD45RO				CD45RO, anti_CD45RO
 CD4	488			CD4_488
 CD4			1	CD4_1
 CD4			2	CD4_2
@@ -78,28 +80,28 @@ CD8a	660			CD8a_660
 CDK1				CDK1
 CDX2	647			CDX2_647
 CK				CK
-CK14				CK14; CK_14; CK-14
-CK14			1	CK14_1; CK_14_1
-CK14			2	CK14_2; CK_14_2
-CK17				CK17; CK_17
+CK14				CK14, CK_14, CK-14
+CK14			1	CK14_1, CK_14_1
+CK14			2	CK14_2, CK_14_2
+CK17				CK17, CK_17
 CK18				CK18
-CK19				CK19; CK_19
+CK19				CK19, CK_19
 CK5				CK5
 CK5P				CK5P
-CK7				CK7; CK_7
+CK7				CK7, CK_7
 CK8				CK8
 COXIV				COXIV
 CSF1R				CSF1R
-CTLA4				CTLA_4; CTLA4
-Ca9				Ca9; Ca_9
+CTLA4				CTLA_4, CTLA4
+Ca9				Ca9, Ca_9
 Chk1_pS345				Chk1_pS345
 Chk2_pT68				pChk2(Thr68)
-Col_I				ColI; Col1; CollagenI; Collagen I
-Col_IV				ColIV; Col4; CollagenIV; Collagen IV
+Col_I				ColI, Col1, CollagenI, Collagen I
+Col_IV				ColIV, Col4, CollagenIV, Collagen IV
 Col_IV	647			CollagenIV_647
-Cyc_A2				CyclinA2; Cyclin_A2; CycA2
-Cyc_B1				CyclinB1; Cyclin_B1; CycB1
-Cyc_D1				CyclinD1; Cyclin_D1; CycD1
+Cyc_A2				CyclinA2, Cyclin_A2, CycA2
+Cyc_B1				CyclinB1, Cyclin_B1, CycB1
+Cyc_D1				CyclinD1, Cyclin_D1, CycD1
 DAPI				DAPI
 DAPI			1	DAPI_1
 DAPI			10	DAPI_10
@@ -124,14 +126,14 @@ ER				ER
 ERK1				ERK_1
 ERK1			1	ERK_1_1
 ERK1			2	ERK_1_2
-ERK_pT202_Y204				ERK_1(pT202;pY204); ERK_1(pT202; pY204); ERK_1_(pT202;pY204)
+ERK_pT202_Y204				ERK_1(pT202;pY204), ERK_1(pT202; pY204), ERK_1_(pT202;pY204)
 ERK_pT202_Y204			1	ERK_1_(pT202;pY204)_1
 ERK_pT202_Y204			2	ERK_1_(pT202;pY204)_2
 ER_alpha				ER_alpha
-ET-1				ET_1; PPET1
-E_cadherin				E_cadherin; E_Cad; Ecad
+ET-1				ET_1, PPET1
+E_cadherin				E_cadherin, E_Cad, Ecad
 E_cadherin	488			Ecad_488
-Eomes				Eomes(Tbr2); Eomes; Tbr2; Eomesodermin
+Eomes				Eomes(Tbr2), Eomes, Tbr2, Eomesodermin
 EpCAM				EpCAM
 FAP				FAP
 FGFR1_pY653				FGFR1_pY653
@@ -139,89 +141,89 @@ FOXA2				FOXA2
 FOXO1a				FOXO1a
 FOXP3				FOXP3
 FOXP3	570			FOXP3_570
-GATA3				GATA_3; GATA3
+GATA3				GATA_3, GATA3
 GFAP				GFAP
 GSK3b_pS9				GSK3_b_pS9
 Glut1				Glut1
-Granzyme_B				Granzyme B; GRNZB; GrB
-H2A_X				H2A_X; H2A.X
-H2ax_pS139				H2ax(S139); H2A.X_(pS139); H2A_X_(pS139)
+Granzyme_B				GranzymeB, GRNZB, GrB
+H2A_X				H2A_X, H2A.X
+H2ax_pS139				H2ax(S139), H2A.X_(pS139), H2A_X_(pS139)
 H3K27				H3K27
 H3K4				H3K4
-H3_pS10				Histone_H3_pS10; pHH3; pH3
-HAMARTIN				HAMARTIN/Tsc1; HAMARTIN; Tsc1
+H3_pS10				Histone_H3_pS10, pHH3, pH3
+HAMARTIN				HAMARTIN/Tsc1, HAMARTIN, Tsc1
 HER2				HER2
 HER2_pY1248				HER2_pY1248
 HER3_pY1289				HER3_pY1289
-HES1				HES_1; HES1
+HES1				HES_1, HES1
 HIF1a				HIF1a
-HLA_A				HLA_A; HLA-A
+HLA_A				HLA_A, HLA-A
 HSP90b				HSP90b
 Hematoxylin				Hematoxylin
 Histone				Histone
-Histone_H3				HistoneH3; Histone H3
-Hoechst			0	Hoechst0; Hoechst_0
-Hoechst			1	Hoechst1; Hoechst_1
-Hoechst			10	Hoechst10; Hoechst_10
-Hoechst			2	Hoechst2; Hoechst_2
-Hoechst			3	Hoechst3; Hoechst_3
-Hoechst			4	Hoechst4; Hoechst_4
-Hoechst			5	Hoechst5; Hoechst_5
-Hoechst			6	Hoechst6; Hoechst_6
-Hoechst			7	Hoechst7; Hoechst_7
-Hoechst			8	Hoechst8; Hoechst_8
-Hoechst			9	Hoechst9; Hoechst_9
+Histone_H3				HistoneH3, Histone_H3
+Hoechst			0	Hoechst0, Hoechst_0
+Hoechst			1	Hoechst1, Hoechst_1
+Hoechst			10	Hoechst10, Hoechst_10
+Hoechst			2	Hoechst2, Hoechst_2
+Hoechst			3	Hoechst3, Hoechst_3
+Hoechst			4	Hoechst4, Hoechst_4
+Hoechst			5	Hoechst5, Hoechst_5
+Hoechst			6	Hoechst6, Hoechst_6
+Hoechst			7	Hoechst7, Hoechst_7
+Hoechst			8	Hoechst8, Hoechst_8
+Hoechst			9	Hoechst9, Hoechst_9
 IBA1				IBA1
 ICOS				ICOS
 IDO				IDO
 IGF1R_pY1161				IGF1R_pY1161
 KAP1				KAP1
-Ki67				Ki_67; Ki-67; Ki67
+Ki67				Ki_67, Ki-67, Ki67
 Ki67	488			Ki67_488
 Ki67	570			Ki67_570
-LAG3				LAG_3; LAG-3; LAG3
+LAG3				LAG_3, LAG-3, LAG3
 LAG3			1	LAG_3_1
 LAG3			2	LAG_3_2
 LAMP2				LAMP2
 LC3				LC3
 LaminABC	488			LaminABC_488
-LaminAC				LamAC; Lamin A/C; LaminA/C; LaminAC
-LaminB1				LamB1; Lamin B1; LaminB1
-LaminB2				LamB2; Lamin B2; LaminB2
+LaminAC				LamAC, Lamin A/C, LaminA/C, LaminAC
+LaminB1				LamB1, Lamin B1, LaminB1
+LaminB2				LamB2, Lamin B2, LaminB2
 MAP2				MAP2
-MCL1				MCL_1; MCL1
+MCL1				MCL_1, MCL1
 MCM6				MCM6
 MET_pY1230_Y1234_Y1235				MET_pY1230_Y1234_Y1235
-MHC_class_I				MHCclassI; MHC class I
-MHC_class_II				MHCclassII; MHC class II
+MHC_class_I				MHCclassI, MHC class I
+MHC_class_II				MHCclassII, MHC class II
 MITF				MITF
 MK2_pT334				pMK2(T334)
 MMP9				MMP9
 MUC1				MUC1
 NDG1_pT346				pNDG1(T346)
-NFkB_p65				NFkB(p65); RELA; p65
-NGFR				NGFR; p75NTR; NGFR/CD271; CD271
+NFkB_p65				NFkB(p65), RELA, p65
+NGFR				NGFR, p75NTR, NGFR/CD271, CD271
 NUP98				NUP98
 N_Cadherin				N_Cadherin
-NaKATPase				anti_NaKATPase; NaKATPase
+NaKATPase				anti_NaKATPase, NaKATPase
 P16				p16
 P21				p21
 P27				p27
 P27_pT187				p27_pT187
 P38_pT180_Y182				P38_pT180_Y182
 P53				p53
-PAN-CK				pan_CK; panCK; pan Cytokeratin
+PAN-CK				pan_CK, panCK, panCytokeratin, pan Cytokeratin
 PAN-CK	540			Keratin_540
-PAN-CK	eF570			PanCK_eF570; Pan_CK_eF570; Keratin_570
+PAN-CK	eF570			PanCK_eF570, Pan_CK_eF570, Keratin_570
 PARP				PARP
 PAX8				PAX8
 PCNA				PCNA
 PCNA_488				PCNA_488
-PD1				PD_1; PD-1; PD1
+PD1				PD_1, PD-1, PD1
 PD1	647			PD1_647
 PDGFRa				PDGFRa
 PDK1_pS240				PDK1_pS240
-PDL1				PD_L1; PD-L1; PDL1
+PDL1				PD_L1, PD-L1, PDL1
 PDL1	647			PDL1_647
 PDPN				PDPN
 POL2A				POL2A
@@ -232,7 +234,7 @@ PgR				PgR
 RAD51				RAD51
 RAS_KHN				RAS(K,H,N)
 RB				Rb
-RB_pS807_S811				pRB(S807/811); Rb_(pS807;pS811); Rb(pS807;pS811)
+RB_pS807_S811				pRB(S807/811), Rb_(pS807;pS811), Rb(pS807;pS811)
 RORgt				RORgt
 RPA32				RPA32
 RPA32_pS4_S8				pRPA32(S4/S8)
@@ -243,10 +245,10 @@ RRM2				RRM2
 S100A4				S100A4
 S100_alpha				S100alpha
 S6				S6
-S6_pS235_S236				pS6(S235/S236); pS6(235/236)
+S6_pS235_S236				pS6(S235/S236), pS6(235/236)
 S6_pS240_S244				pS6(240/244)
 SMAD3				SMAD3
-SQSTM1				SQSTM1/p62; p62; SQSTM1
+SQSTM1				SQSTM1/p62, p62, SQSTM1
 SRC_pY418				pSRC(Y418)
 STAT3				STAT3
 STAT3_pY705				pSTAT3(Y705)
@@ -255,24 +257,24 @@ Survivin				Survivin
 TIM3				TIM3
 TPCN2				TPCN2
 TUBB3				TUBB3
-T_bet				T_bet; T-bet
+T_bet				T_bet, T-bet
 Tryptase				Tryptase
 Tsc2_pT1462				Tsc2_pT1462
-VEGFR1				VEGFR1/FLT1; VEGFR1; FLT1
+VEGFR1				VEGFR1/FLT1, VEGFR1, FLT1
 VEGFR2				VEGFR2
-Vimentin				Vimentin; Vim
+Vimentin				Vimentin, Vim
 Vimentin	555			Vimentin_555
 Vinculin				Vinculin
 WEE1_pS642				WEE1_pS642
 YAP1				YAP1
-aSMA				alpha_SMA; alpha_SMA; aSMA
+aSMA				alpha_SMA, alpha_SMA, aSMA
 aSMA	660			aSMA_660
 beta_Tubulin				beta_Tubulin
 cCasp3				cCasp3
 cJUN				cJUN
 cJun_pS73				C_Jun_pS73
 cMYC				cMYC
-cPARP				cPARP; Cleaved_PARP_(D214); CleavedPARP_(D214); Cleaved PARP_(D214)
+cPARP				cPARP, Cleaved_PARP_(D214), CleavedPARP_(D214), Cleaved PARP_(D214)
 c_MET				c_MET
 gH2ax				gH2ax
 mTOR				mTOR

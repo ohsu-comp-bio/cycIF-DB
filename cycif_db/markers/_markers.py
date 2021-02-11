@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pathlib
 
-from ..model.mapping import Marker, OTHER_FEATHERS
+from ..model.mapping import OTHER_FEATHERS
 
 
 log = logging.getLogger(__name__)
@@ -31,14 +31,14 @@ class Markers(object):
 
         markers_df = pd.read_csv(self._path, sep='\t', dtype=str).fillna('')
 
+        self.unique_keys = ['name', 'fluor', 'anti', 'replicate']
+
         self._check_duplicate(markers_df)
         self._load_stock_markers()
 
     def _check_duplicate(self, df):
         """ check marker duplicate.
         """
-        self.unique_keys = \
-            [c.name for c in Marker.__table__.columns if c.unique]
         # check uniqueness of all stock markers
         duplicate_markers = df.duplicated(subset=self.unique_keys, keep=False)
         if duplicate_markers.any():
@@ -52,7 +52,7 @@ class Markers(object):
         alias: db_name format.
         """
         self.markers = {alias.lower().strip(): i for i, v in enumerate(
-                        self.markers_df['aliases']) for alias in v.split(';')}
+                        self.markers_df['aliases']) for alias in v.split(',')}
         log.info("Converted to %d pairs of `marker: db_marker`."
                  % len(self.markers))
 
@@ -131,9 +131,9 @@ class Markers(object):
                            for x, y in zip(self.unique_keys, mkr)]
             marker_mask = np.logical_and.reduce(marker_mask)
             if marker_mask.any():
-                for alias in mkr[-1].split(';'):
+                for alias in mkr[-1].split(','):
                     if format_marker(alias) not in self.markers:
-                        df.loc[marker_mask, 'aliases'] += '; ' + alias
+                        df.loc[marker_mask, 'aliases'] += ', ' + alias
             else:
                 df.loc[start+i] = mkr
 

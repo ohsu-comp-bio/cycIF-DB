@@ -8,7 +8,6 @@ cyc_markers = Markers()
 
 
 def test_load_known_markers():
-    
     markers, other_features = cyc_markers.markers, cyc_markers.other_features
 
     assert len(markers) > 80, len(markers)

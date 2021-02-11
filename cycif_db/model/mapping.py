@@ -41,16 +41,15 @@ class Sample(Base):
     __tablename__ = 'sample'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
-    tag = Column(String, unique=True)
+    name = Column(String, nullable=False)
+    tag = Column(String)
     annotation = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     cells = relationship('Cell', back_populates='sample')
     markers = relationship('Marker',
                            secondary='sample_marker_association',
-                           back_populates='samples',
-                           cascade="all, delete-orphan")
+                           back_populates='samples')
     marker_associates = relationship('Sample_Marker_Association',
                                      back_populates='sample')
 
@@ -67,10 +66,10 @@ class Marker(Base):
     __tablename__ = 'marker'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    fluor = Column(String, unique=True)
-    anti = Column(String, unique=True)
-    replicate = Column(String, unique=True)
+    name = Column(String, nullable=False)
+    fluor = Column(String)
+    anti = Column(String)
+    replicate = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample_associates = relationship('Sample_Marker_Association',
@@ -78,7 +77,10 @@ class Marker(Base):
     samples = relationship('Sample',
                            secondary='sample_marker_association',
                            back_populates='markers',
-                           passive_deletes=True)
+                           passive_deletes=False)
+
+    aliases = relationship('Marker_Alias',
+                           back_populates='marker')
 
     def __repr__(self):
         return "<Marker({}, '{}', '{}', '{}', '{}')>".format(
@@ -93,9 +95,16 @@ class Marker_Alias(Base):
     __tablename__ = 'marker_alias'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=False)
     marker_id = Column(Integer, ForeignKey("marker.id", ondelete="CASCADE",
                                            onupdate="CASCADE"))
+
+    marker = relationship('Marker',
+                          back_populates='aliases')
+
+    def __repr__(self):
+        return "<Marker_Alias('{}', marker_id={})>".format(
+            self.name, self.marker_id)
 
 
 Index('ix_marker_alias', func.lower(Marker_Alias.name), unique=True)

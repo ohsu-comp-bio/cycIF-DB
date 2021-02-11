@@ -28,10 +28,6 @@ def upgrade():
         sa.Column('entry_at', sa.DateTime(timezone=True),
                   server_default=sa.func.current_timestamp(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('anti'),
-        sa.UniqueConstraint('fluor'),
-        sa.UniqueConstraint('name'),
-        sa.UniqueConstraint('replicate')
     )
     op.create_index('ix_marker_name', 'marker',
                     [sa.text('lower(name)'), sa.text('lower(fluor)'),
@@ -46,8 +42,6 @@ def upgrade():
         sa.Column('entry_at', sa.DateTime(timezone=True),
                   server_default=sa.func.current_timestamp(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name'),
-        sa.UniqueConstraint('tag')
     )
     op.create_index('ix_sample_name', 'sample',
                     [sa.text('lower(name)'), sa.text('lower(tag)')], unique=True)
@@ -81,7 +75,6 @@ def upgrade():
         sa.ForeignKeyConstraint(['marker_id'], ['marker.id'],
                                 onupdate='CASCADE', ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
     )
     op.create_index('ix_marker_alias', 'marker_alias',
                     [sa.text('lower(name)')], unique=True)

@@ -2,17 +2,26 @@
 """
 import logging
 import pandas as pd
+import re
 
 from collections.abc import Iterable
 from pandas import DataFrame
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from .data_frame import CycDataFrame
-from .model import Cell, Marker, Sample, Sample_Marker_Association
+from .data_frame import CycDataFrame, get_headers_categorized
+from .markers import format_marker
+from .model import (Cell, Marker, Marker_Alias, Sample,
+                    Sample_Marker_Association)
 from .utils import engine_maker
 
 
 log = logging.getLogger(__name__)
+
+HEADER_SUFFIX_MAPPING = {
+    '_+nuclei[\s_-]*masks$': '_nu',
+    '_+cell[\s_-]*masks$': '_cl',
+    '_+cellpose[\s_-]*masks[\s_-]*on[\s_-]*data[\s_-]*\d*$': '_nu',
+}
 
 
 class CycSession(Session):
@@ -39,18 +48,36 @@ class CycSession(Session):
     def load_dataframe_util(self):
         self.data_frame = CycDataFrame()
 
-    def get_marker_dbname(self, marker_name):
+    def other_feature_to_dbcolumn(self, header):
+        """ map none marker header to db column.
+        """
         if not hasattr(self, 'data_frame'):
             self.load_dataframe_util()
 
-        rval = self.data_frame.stock_markers.get_dbname(marker_name)
-        if not rval:
-            raise ValueError(f"Unknown marker name {marker_name}! Please "
-                             "consider adding it to the `markers.json` file.")
-        return rval
+        rval = self.data_frame.stock_markers.get_other_feature_db_name(header)
+        if rval:
+            return rval.lower()
+
+        raise ValueError(f'Unrecognized header: {header}!')
+
+    def marker_header_to_dbkey(self, header):
+        """ map marker header to db json key.
+        Suppose the header has valid suffix.
+        """
+        for k, v in HEADER_SUFFIX_MAPPING.items():
+            marker, count = re.subn(k, '', header, flags=re.I)
+            if count:
+                marker = format_marker(marker)
+                marker_id = self.query(Marker_Alias.marker_id) \
+                    .filter(func.lower(Marker_Alias.name) == marker.lower()) \
+                    .scalar()
+                assert marker_id
+                return str(marker_id) + v
+
+        raise Exception(f"Unregnized suffix for header: {header}!")
 
     ######################################################
-    #              Data Entry
+    #              Data Ingestion
     ######################################################
     def add_sample(self, sample):
         """ Add a sample object to samples table.
@@ -66,9 +93,9 @@ class CycSession(Session):
             "Unsupported datatype for sample!"
 
         self.add(sample)
-        if not self.autoflush:
-            self.flush()
+        self.flush()
         log.info("Added sample {}.".format(repr(sample)))
+        return sample
 
     def insert_cells_mappings(self, sample_id, cells, **kwargs):
         """ Insert cell quantification data into cells table.
@@ -87,17 +114,20 @@ class CycSession(Session):
         elif not isinstance(cells, DataFrame):
             raise ValueError("Unsupported datatype for cells!")
 
-        if not hasattr(self, 'data_frame'):
-            self.load_dataframe_util()
-        cells.columns = cells.columns.map(self.data_frame.header_to_dbcolumn)
+        markers, others = get_headers_categorized(cells.columns)
 
-        # save sample specific feature list
-        feature_list = list(cells.columns)
-        self.query(Sample).filter_by(id=sample_id).update(
-            dict(feature_list=','.join(feature_list)))
+        cells_marker = cells.loc[:, markers]
+        cells_marker.columns = cells_marker.columns.map(
+            self.marker_header_to_dbkey)
+        marker_obs = cells_marker.to_dict('records')
 
-        cells['sample_id'] = sample_id
+        cells_other = cells.loc[:, others]
+        cells_other.columns = cells_other.columns.map(
+            self.other_feature_to_dbcolumn)
+        cells_other['sample_id'] = sample_id
         cell_obs = cells.to_dict('records')
+        for idx, ob in enumerate(cell_obs):
+            ob['features'] = marker_obs[idx]
 
         self.bulk_insert_mappings(Cell, cell_obs)
         if not self.autoflush:
@@ -105,27 +135,58 @@ class CycSession(Session):
         log.info("Added %d cell records." % len(cell_obs))
 
     def add_marker(self, marker):
-        """ Insert one marker object into markers table.
+        """ Add marker object
 
-        Parameters
-        -----------
-        marker: str, dict or Marker object.
-            Marker name (string) or dict to build a Marker object.
+        Parameter
+        --------
+        marker: dict or Marker object
+
+        Return
+        ------
+        Marker object or None
         """
-        if isinstance(marker, str):
-            marker = self.get_marker_dbname(marker)
-            marker = Marker(name=marker)
-        elif isinstance(marker, dict):
-            marker['name'] = self.get_marker_dbname(
-                marker['name'])
+        if isinstance(marker, dict):
             marker = Marker(**marker)
-        elif not isinstance(marker, Marker):
-            raise ValueError("Unsupported datatype for sample!")
-
+        if not isinstance(marker, Marker):
+            raise ValueError("%s was not a supported datatype for marker!"
+                             % type(marker))
         self.add(marker)
-        if not self.autoflush:
-            self.flush()
+        self.flush()
+        assert marker.id
         log.info("Added marker {}.".format(repr(marker)))
+        return marker
+
+    def insert_or_sync_markers(self):
+        """ Sync stock markers in `markers.tsv` with database.
+        """
+        if not hasattr(self, 'data_frame'):
+            self.load_dataframe_util()
+
+        markers_df = self.data_frame.stock_markers.markers_df
+        try:
+            for marker in markers_df.to_dict('records'):
+                print(marker)
+                aliases = marker.pop('aliases')
+                marker_id = self.get_or_create_marker(marker).id
+                for alias in aliases.split(','):
+                    obj = self.query(Marker_Alias).filter(
+                        func.lower(Marker_Alias.name) == format_marker(alias))\
+                        .first()
+                    if not obj:
+                        alias = Marker_Alias(name=alias.strip(),
+                                             marker_id=marker_id)
+                        self.add(alias)
+                        log.info("Added marker alias %s" % repr(alias))
+                    elif obj.marker_id != marker_id:
+                        obj.marker_id = marker_id
+                        log.info("Updated marker_id to %s for %s."
+                                 % (marker_id, repr(obj)))
+                    self.flush()
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+        log.info("Insert or Sync stock markers completed!")
 
     def insert_sample_markers(self, sample_id, markers, **kwargs):
         """ Insert sample marker association into database.
@@ -321,30 +382,30 @@ class CycSession(Session):
     ###################################################
     #              Data Query
     ###################################################
-    def get_or_create_marker_by_name(self, marker_name):
-        """ Fetch a Marker object by name from markers table.
+    def get_or_create_marker(self, marker):
+        """ Fetch a Marker object from markers table.
         if fails, create one instead.
 
         Parameters
         ----------
-        marker_name: str.
-            The name of marker to query.
+        marker_name: dict.
+            The marker to query.
 
         Returns
         ----------
         An object of Marker.
         """
-        marker = self.get_marker_by_name(marker_name)
-        if marker:
+        print(('get_or_create_marker', marker))
+        marker_obj = self.get_marker_by_name(marker)
+        if marker_obj:
             log.info("Successfully fetched a martching marker %s."
                      % repr(marker))
         else:
             log.info("No matching marker found for %s. Create one instead..."
-                     % marker_name)
-            self.add_marker(marker_name)
-            marker = self.get_marker_by_name(marker_name)
+                     % marker)
+            marker_obj = self.add_marker(marker)
 
-        return marker
+        return marker_obj
 
     def get_samples_by_name(self, sample_name):
         """ Query samples by name.
@@ -397,23 +458,33 @@ class CycSession(Session):
         log.info("This database has no matching record for sammple=`{}`,"
                  " name=`{}` and tag=`{}`!".format(sample, name, tag))
 
-    def get_marker_by_name(self, marker_name):
-        """ Query markers by name.
+    def get_marker_by_name(self, marker):
+        """ Query marker.
 
         Parameters
         ----------
-        marker_name: str.
-            Marker name.
+        marker_name: dict
+            Marker query info.
 
         Returns
         -------
         Marker object or None.
         """
-        db_name = self.get_marker_dbname(marker_name)
+        print(('get_marker_by_name', marker))
+        name = marker.get('name')
+        fluor = marker.get('fluor', '') or ''
+        anti = marker.get('anti', '') or ''
+        replicate = marker.get('replicate', '') or ''
 
-        # TODO Make header_to_dbcolumn query.
-        marker = self.query(Marker).filter(
-            func.lower(Marker.name) == db_name.lower()).first()
+        marker = self.query(Marker) \
+            .filter(func.lower(Marker.name) == name.lower()) \
+            .filter((Marker.fluor == fluor)
+                    | (func.lower(Marker.fluor) == fluor.lower())) \
+            .filter((Marker.anti == anti)
+                    | (func.lower(Marker.anti) == anti.lower())) \
+            .filter((Marker.replicate == replicate)
+                    | (func.lower(Marker.replicate) == replicate.lower())) \
+            .first()
         return marker
 
     def list_samples(self, detailed=False):
