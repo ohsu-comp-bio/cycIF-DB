@@ -69,7 +69,7 @@ class Marker(Base):
     name = Column(String, nullable=False)
     fluor = Column(String)
     anti = Column(String)
-    replicate = Column(String)
+    duplicate = Column(String)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample_associates = relationship('Sample_Marker_Association',
@@ -84,11 +84,11 @@ class Marker(Base):
 
     def __repr__(self):
         return "<Marker({}, '{}', '{}', '{}', '{}')>".format(
-            self.id, self.name, self.fluor, self.anti, self.replicate)
+            self.id, self.name, self.fluor, self.anti, self.duplicate)
 
 
 Index('ix_marker_name', func.lower(Marker.name), func.lower(Marker.fluor),
-      func.lower(Marker.anti), func.lower(Marker.replicate), unique=True)
+      func.lower(Marker.anti), func.lower(Marker.duplicate), unique=True)
 
 
 class Marker_Alias(Base):

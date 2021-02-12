@@ -24,14 +24,14 @@ def upgrade():
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('fluor', sa.String(), nullable=True),
         sa.Column('anti', sa.String(), nullable=True),
-        sa.Column('replicate', sa.String(), nullable=True),
+        sa.Column('duplicate', sa.String(), nullable=True),
         sa.Column('entry_at', sa.DateTime(timezone=True),
                   server_default=sa.func.current_timestamp(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_index('ix_marker_name', 'marker',
                     [sa.text('lower(name)'), sa.text('lower(fluor)'),
-                     sa.text('lower(anti)'), sa.text('lower(replicate)')],
+                     sa.text('lower(anti)'), sa.text('lower(duplicate)')],
                     unique=True)
     op.create_table(
         'sample',

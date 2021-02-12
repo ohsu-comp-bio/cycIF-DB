@@ -31,7 +31,7 @@ class Markers(object):
 
         markers_df = pd.read_csv(self._path, sep='\t', dtype=str).fillna('')
 
-        self.unique_keys = ['name', 'fluor', 'anti', 'replicate']
+        self.unique_keys = ['name', 'fluor', 'anti', 'duplicate']
 
         self._check_duplicate(markers_df)
         self._load_stock_markers()
@@ -111,7 +111,7 @@ class Markers(object):
         Arguments
         ---------
         new_markers: tuple, list or list of lists.
-            In (name, fluor, anti, replicate, aliases) format.
+            In (name, fluor, anti, duplicate, aliases) format.
         toplace: None or str, default is None.
             The path to save the updated marker dataframe. When toplace
             is None, it's the original path + '.new'.

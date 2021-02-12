@@ -488,7 +488,7 @@ class CycSession(Session):
         name = marker.get('name')
         fluor = marker.get('fluor', '') or ''
         anti = marker.get('anti', '') or ''
-        replicate = marker.get('replicate', '') or ''
+        duplicate = marker.get('duplicate', '') or ''
 
         marker = self.query(Marker) \
             .filter(func.lower(Marker.name) == name.lower()) \
@@ -496,8 +496,8 @@ class CycSession(Session):
                     | (func.lower(Marker.fluor) == fluor.lower())) \
             .filter((Marker.anti == anti)
                     | (func.lower(Marker.anti) == anti.lower())) \
-            .filter((Marker.replicate == replicate)
-                    | (func.lower(Marker.replicate) == replicate.lower())) \
+            .filter((Marker.duplicate == duplicate)
+                    | (func.lower(Marker.duplicate) == duplicate.lower())) \
             .first()
         return marker
 
