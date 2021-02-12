@@ -9,7 +9,7 @@ from pandas import DataFrame
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from .data_frame import CycDataFrame, get_headers_categorized
-from .markers import format_marker
+from .markers import format_marker, Marker_Comparator
 from .model import (Cell, Marker, Marker_Alias, Sample,
                     Sample_Marker_Association)
 from .utils import engine_maker
@@ -703,3 +703,39 @@ def column_sort_key(column):
     if column.endswith('_masks'):
         return '1' + column
     return column
+
+
+class DB_Key(object):
+    def __init__(self, session, key, fluor_sensitive=True,
+                 anti_sensitive=False, keep_duplicates='keep') -> None:
+        self.session = session
+        self.key = key
+        marker_id, mask_type = self.key.split('_')
+        self.marker_id = int(marker_id)
+        if mask_type == 'cl':
+            self.mask_type = 'cell_masks'
+        elif mask_type == 'nu':
+            self.mask_type = 'nuclei_masks'
+        else:
+            raise ValueError(f"Unrecognized dabase json key: {key}!")
+        marker = self.session.query(Marker).get(self.marker_id)
+        self.marker_comparator = Marker_Comparator(
+            marker, fluor_sensitive=fluor_sensitive,
+            anti_sensitive=anti_sensitive,
+            keep_duplicates=keep_duplicates)
+
+    def __repr__(self) -> str:
+        return f"<DB_Key('{self.key}')>"
+
+    def to_header(self) -> str:
+        return repr(self.marker_comparator) + '__' + self.mask_type
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DB_Key):
+            return False
+
+        return self.marker_comparator == other.marker_comparator \
+            and self.mask_type == other.mask_type
+
+    def __hash__(self) -> int:
+        return self.marker_comparator.__hash__() + hash(self.mask_type)
