@@ -82,7 +82,9 @@ def test_marker_comparator():
     m4 = Marker(name='CD4', anti='goat')
     m5 = Marker(name='CD4', duplicate='1')
     m6 = Marker(name='CD4', duplicate='2')
+    m7 = Marker(name='CD45')
 
+    assert Marker_Comparator(m1) != Marker_Comparator(m7)
     assert Marker_Comparator(m1) != Marker_Comparator(m2)
     assert Marker_Comparator(m1, fluor_sensitive=False) == \
         Marker_Comparator(m2, fluor_sensitive=False)
@@ -96,6 +98,22 @@ def test_marker_comparator():
     assert Marker_Comparator(m1) == Marker_Comparator(m5)
     assert Marker_Comparator(m1) == Marker_Comparator(m6)
 
+    assert repr(Marker_Comparator(m1)) == 'CD4', repr(Marker_Comparator(m1))
+    assert repr(Marker_Comparator(m2)) == 'CD4_ef570', \
+        repr(Marker_Comparator(m2))
+    assert repr(Marker_Comparator(m2, fluor_sensitive=False)) == 'CD4', \
+        repr(Marker_Comparator(m2, fluor_sensitive=False))
+    assert repr(Marker_Comparator(m4)) == 'CD4', \
+        repr(Marker_Comparator(m4))
+    assert repr(Marker_Comparator(m4, anti_sensitive=True)) == 'CD4_goat', \
+        repr(Marker_Comparator(m4, anti_sensitive=True))
+    assert repr(Marker_Comparator(m5)) == 'CD4_1', repr(Marker_Comparator(m5))
+    assert repr(Marker_Comparator(m6)) == 'CD4_2', repr(Marker_Comparator(m6))
+
     marker_set = set([Marker_Comparator(m1), Marker_Comparator(m5),
                       Marker_Comparator(m6)])
     assert len(marker_set) == 1
+
+    assert Marker_Comparator(m1) in marker_set
+    assert Marker_Comparator(m5) in marker_set
+    assert Marker_Comparator(m6) in marker_set
