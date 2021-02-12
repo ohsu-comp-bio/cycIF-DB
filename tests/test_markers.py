@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import tempfile
-from cycif_db.markers import Markers
+from cycif_db.markers import Markers, Marker_Comparator
+from cycif_db.model import Marker
 
 
 cyc_markers = Markers()
@@ -13,7 +14,6 @@ def test_load_known_markers():
     assert len(markers) > 80, len(markers)
     assert len(other_features) == 12, len(other_features)
 
-    print(markers)
     assert 'asma' in markers
     assert markers['asma'] == 268, markers['asma']
 
@@ -73,3 +73,29 @@ def test_update_stock_markers():
     masks = np.logical_and.reduce(masks)
     entry = list(df.loc[masks, 'aliases'])[-1]
     assert (entry) == 'CK14, CK_14, CK-14, CK14a', entry
+
+
+def test_marker_comparator():
+    m1 = Marker(name='CD4')
+    m2 = Marker(name='CD4', fluor='ef570')
+    m3 = Marker(name='CD4', fluor='ef570', anti='goat')
+    m4 = Marker(name='CD4', anti='goat')
+    m5 = Marker(name='CD4', duplicate='1')
+    m6 = Marker(name='CD4', duplicate='2')
+
+    assert Marker_Comparator(m1) != Marker_Comparator(m2)
+    assert Marker_Comparator(m1, fluor_sensitive=False) == \
+        Marker_Comparator(m2, fluor_sensitive=False)
+    assert Marker_Comparator(m1) == Marker_Comparator(m4)
+    assert Marker_Comparator(m1, anti_sensitive=True) != \
+        Marker_Comparator(m4, anti_sensitive=True)
+    assert Marker_Comparator(m2) == Marker_Comparator(m3)
+    assert Marker_Comparator(m2, anti_sensitive=True) != \
+        Marker_Comparator(m3, anti_sensitive=True)
+
+    assert Marker_Comparator(m1) == Marker_Comparator(m5)
+    assert Marker_Comparator(m1) == Marker_Comparator(m6)
+
+    marker_set = set([Marker_Comparator(m1), Marker_Comparator(m5),
+                      Marker_Comparator(m6)])
+    assert len(marker_set) == 1

@@ -168,7 +168,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     def migrate_to_head():
         with engine.begin() as connection:
             alembic_cfg.attributes['connection'] = connection
-            print('command.upgrade')
+            log.info('command.upgrade')
             command.upgrade(alembic_cfg, 'head')
 
     def migrate_from_scratch():
@@ -179,7 +179,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     if new_database:
         migrate_from_scratch()
     elif auto_migrate:
-        print('migrate_to_head')
+        log.info('migrate_to_head')
         migrate_to_head()
 
     script = ScriptDirectory.from_config(alembic_cfg)
