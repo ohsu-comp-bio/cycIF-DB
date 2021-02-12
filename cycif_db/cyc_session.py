@@ -38,6 +38,8 @@ class CycSession(Session):
             engine = engine_maker()
             bind = engine
         super(CycSession, self).__init__(bind=bind, **kwargs)
+        # float precision
+        self.decimals = 4
 
     def __enter__(self):
         return self
@@ -58,7 +60,7 @@ class CycSession(Session):
         if rval:
             return rval.lower()
 
-        raise ValueError(f'Unrecognized header: {header}!')
+        raise ValueError(f'Unrecognized header: `{header}`!')
 
     def marker_header_to_dbkey(self, header):
         """ map marker header to db json key.
@@ -67,14 +69,13 @@ class CycSession(Session):
         for k, v in HEADER_SUFFIX_MAPPING.items():
             marker, count = re.subn(k, '', header, flags=re.I)
             if count:
-                marker = format_marker(marker)
-                marker_id = self.query(Marker_Alias.marker_id) \
-                    .filter(func.lower(Marker_Alias.name) == marker.lower()) \
-                    .scalar()
+                marker_id = self.get_alias_marker_id(marker)
                 assert marker_id
-                return str(marker_id) + v
+                rval = str(marker_id) + v
+                log.info(f"Mapped header `{header}` to `{rval}`!")
+                return rval
 
-        raise Exception(f"Unregnized suffix for header: {header}!")
+        raise Exception(f"Unregnized suffix for header: `{header}`!")
 
     ######################################################
     #              Data Ingestion
@@ -119,13 +120,14 @@ class CycSession(Session):
         cells_marker = cells.loc[:, markers]
         cells_marker.columns = cells_marker.columns.map(
             self.marker_header_to_dbkey)
+        cells_marker = cells_marker.round(decimals=self.decimals)
         marker_obs = cells_marker.to_dict('records')
 
         cells_other = cells.loc[:, others]
         cells_other.columns = cells_other.columns.map(
             self.other_feature_to_dbcolumn)
         cells_other['sample_id'] = sample_id
-        cell_obs = cells.to_dict('records')
+        cell_obs = cells_other.to_dict('records')
         for idx, ob in enumerate(cell_obs):
             ob['features'] = marker_obs[idx]
 
@@ -165,7 +167,6 @@ class CycSession(Session):
         markers_df = self.data_frame.stock_markers.markers_df
         try:
             for marker in markers_df.to_dict('records'):
-                print(marker)
                 aliases = marker.pop('aliases')
                 marker_id = self.get_or_create_marker(marker).id
                 for alias in aliases.split(','):
@@ -211,18 +212,17 @@ class CycSession(Session):
 
         associates = []
         for i, row in markers.iterrows():
-            marker = self.get_or_create_marker_by_name(row['marker_name'])
+            marker_id = self.get_alias_marker_id(row['marker_name'])
             asso = {
                 'sample_id': sample_id,
-                'marker_id': marker.id,
+                'marker_id': marker_id,
                 'channel_number': row['channel_number'],
                 'cycle_number': row['cycle_number']
             }
             associates.append(asso)
 
         self.bulk_insert_mappings(Sample_Marker_Association, associates)
-        if not self.autoflush:
-            self.flush()
+        self.flush()
         log.info("Added %d entries of sample marker association!"
                  % len(associates))
 
@@ -254,10 +254,9 @@ class CycSession(Session):
             ("This sample couldn't be added to database because it's "
              "against the unique constraint or it has invalid `id`!")
         try:
-            self.add_sample(sample)
-            sample_id = self.get_sample_id(sample)
-            self.insert_cells_mappings(sample_id, cells, **kwargs)
-            self.insert_sample_markers(sample_id, markers, **kwargs)
+            sample = self.add_sample(sample)
+            self.insert_cells_mappings(sample.id, cells, **kwargs)
+            self.insert_sample_markers(sample.id, markers, **kwargs)
             if not dry_run:
                 self.commit()
             else:
@@ -382,6 +381,23 @@ class CycSession(Session):
     ###################################################
     #              Data Query
     ###################################################
+    def get_alias_marker_id(self, alias):
+        """ get marker_id for a marker alias.
+
+        Parameters
+        ----------
+        alias: str.
+
+        Returns
+        --------
+        Int or None.
+        """
+        marker_id = self.query(Marker_Alias.marker_id) \
+            .filter(func.lower(Marker_Alias.name) == format_marker(alias)) \
+            .scalar()
+
+        return marker_id
+
     def get_or_create_marker(self, marker):
         """ Fetch a Marker object from markers table.
         if fails, create one instead.
@@ -395,7 +411,6 @@ class CycSession(Session):
         ----------
         An object of Marker.
         """
-        print(('get_or_create_marker', marker))
         marker_obj = self.get_marker_by_name(marker)
         if marker_obj:
             log.info("Successfully fetched a martching marker %s."
@@ -470,7 +485,6 @@ class CycSession(Session):
         -------
         Marker object or None.
         """
-        print(('get_marker_by_name', marker))
         name = marker.get('name')
         fluor = marker.get('fluor', '') or ''
         anti = marker.get('anti', '') or ''

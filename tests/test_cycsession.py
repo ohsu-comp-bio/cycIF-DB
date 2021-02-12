@@ -1,11 +1,13 @@
 import pandas as pd
+import pathlib
 import random
 import string
 
 from nose.tools import assert_raises
 from sqlalchemy_utils import drop_database, database_exists
 from cycif_db import CycSession
-from cycif_db.model import create_db
+from cycif_db import model
+from cycif_db.model import create_db, Sample, Cell
 from cycif_db.utils import engine_maker
 
 
@@ -71,3 +73,24 @@ def test_marker_header_to_dbkey():
     assert_raises(Exception,
                   csess.marker_header_to_dbkey,
                   'DAPI_100_Nuclei Masks__')
+
+
+def test_add_sample_complex():
+    module = pathlib.Path(__file__).absolute().parent.parent
+
+    path84 = str(pathlib.Path.joinpath(
+        module, 'examples',
+        'Galaxy76-[quantification_on_data_1,_data_74,_and_data_71].csv')
+    )
+
+    path_markers_84 = str(pathlib.Path.joinpath(
+        module, 'examples',
+        'Galaxy76-markers.csv')
+    )
+
+    csess.add_sample_complex({'name': 'Galaxy84', 'tag': 'v0.1'},
+                             path84, path_markers_84)
+    n_samples = csess.query(Sample.id).count()
+    n_cells = csess.query(Cell.id).count()
+    assert n_samples == 1, n_samples
+    assert n_cells == 11032, n_cells
