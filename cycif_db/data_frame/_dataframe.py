@@ -54,7 +54,7 @@ class CycDataFrame(object):
         None or raise ValueError if failed.
         """
         if isinstance(cells_data, str):   # file path to the tabu
-            df = pd.read_csv(cells_data, **kwargs)
+            df = pd.read_csv(cells_data, nrows=1, **kwargs)
             cells_data = df.columns
         elif isinstance(cells_data, DataFrame):
             cells_data = cells_data.columns
@@ -151,7 +151,7 @@ def get_headers_categorized(data, **kwargs):
         Used `pd.read_csv`. Only relevent when data is str.
     """
     if isinstance(data, str):   # file path to the tabu
-        df = pd.read_csv(data, **kwargs)
+        df = pd.read_csv(data, nrows=1, **kwargs)
         headers = df.columns
     elif isinstance(data, DataFrame):
         headers = data.columns
