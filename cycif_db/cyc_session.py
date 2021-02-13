@@ -99,7 +99,8 @@ class CycSession(Session):
         log.info("Added sample {}.".format(repr(sample)))
         return sample
 
-    def insert_cells_mappings(self, sample_id, cells, **kwargs):
+    def insert_cells_mappings(self, sample_id, cells, chunksize=2000,
+                              **kwargs):
         """ Insert cell quantification data into cells table.
 
         Parameters
@@ -108,33 +109,50 @@ class CycSession(Session):
             Index of sample object in database.
         cells: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
+        chunksize: int or None.
+            Used in `pd.read_csv`.
         kwargs: keywords parameter.
             Addtional parameters used `pd.read_csv`.
         """
-        if isinstance(cells, str):
-            cells = pd.read_csv(cells, **kwargs)
-        elif not isinstance(cells, DataFrame):
+        if not isinstance(cells, (str, DataFrame)):
             raise ValueError("Unsupported datatype for cells!")
 
-        markers, others = get_headers_categorized(cells.columns)
+        markers, others = get_headers_categorized(cells)
+        marker_db_keys = [self.marker_header_to_dbkey(x) for x in markers]
+        other_columns = [self.other_feature_to_dbcolumn(x) for x in others]
 
-        cells_marker = cells.loc[:, markers]
-        cells_marker.columns = cells_marker.columns.map(
-            self.marker_header_to_dbkey)
-        cells_marker = cells_marker.round(decimals=self.decimals)
-        marker_obs = cells_marker.to_dict('records')
+        if isinstance(cells, str):
+            for df in pd.read_csv(cells, chunksize=chunksize, **kwargs):
+                self._batch_insert_cells_mappings(df, markers, marker_db_keys,
+                                                  others, other_columns,
+                                                  sample_id)
 
-        cells_other = cells.loc[:, others]
-        cells_other.columns = cells_other.columns.map(
-            self.other_feature_to_dbcolumn)
-        cells_other['sample_id'] = sample_id
-        cell_obs = cells_other.to_dict('records')
+        else:     # cells is DataFrame
+            for i in range(0, cells.shape[0], chunksize):
+                df = cells[i: i+chunksize]
+                self._batch_insert_cells_mappings(df, markers, marker_db_keys,
+                                                  others, other_columns,
+                                                  sample_id)
+
+    def _batch_insert_cells_mappings(self, dataframe, markers, marker_db_keys,
+                                     others, other_columns, sample_id):
+        """ helper function for insert cells mappings
+        """
+        df = dataframe.round(decimals=self.decimals)
+
+        df_markers = df.loc[:, markers]
+        df_markers.columns = marker_db_keys
+        marker_obs = df_markers.to_dict('records')
+
+        df_others = df.loc[:, others]
+        df_others.columns = other_columns
+        df_others['sample_id'] = sample_id
+        cell_obs = df_others.to_dict('records')
         for idx, ob in enumerate(cell_obs):
             ob['features'] = marker_obs[idx]
 
         self.bulk_insert_mappings(Cell, cell_obs)
-        if not self.autoflush:
-            self.flush()
+        self.flush()
         log.info("Added %d cell records." % len(cell_obs))
 
     def add_marker(self, marker):
