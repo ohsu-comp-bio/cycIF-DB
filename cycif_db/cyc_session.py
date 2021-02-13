@@ -825,31 +825,34 @@ def fuse_db_keys(session, key_lists, marker_filter='intersection',
     -------
     List of strs.
     """
-    if marker_filter == 'union':
-        key_sets = [set(x) for x in key_lists]
-        key_set = set.union(*key_sets)
-
-        key_list = sorted(list(key_set), key=lambda x: DB_Key(session, x))
-
-        return key_list
-
-    key_lists = [[DB_Key(session, key,
-                         fluor_sensitive=fluor_sensitive,
-                         anti_sensitive=anti_sensitive,
-                         keep_duplicates=keep_duplicates)
-                  for key in inner_list]
-                 for inner_list in key_lists]
+    if marker_filter not in ('intersection', 'union'):
+        raise ValueError("Argument `marker_filter` must be one of "
+                         "['intersection', 'union'], but got "
+                         "`{}`!".format(marker_filter))
 
     key_sets = [set(x) for x in key_lists]
-    key_set = set.intersection(*key_sets)
-    obj_list = []
-    key_list = []
-    for inner_list in key_lists:
-        for ob in inner_list:
-            if ob in key_set and ob.key not in key_list:
-                obj_list.append(ob)
-                key_list.append(ob.key)
-    obj_list = sorted(obj_list)
-    key_list = [key_ob.key for key_ob in obj_list]
+    key_set = set.union(*key_sets)
+    key_list = sorted(list(key_set), key=lambda x: DB_Key(session, x))
+
+    if marker_filter == 'union':
+        return key_list
+
+    ob_lists = [[DB_Key(session, key,
+                        fluor_sensitive=fluor_sensitive,
+                        anti_sensitive=anti_sensitive,
+                        keep_duplicates=keep_duplicates)
+                 for key in inner_list]
+                for inner_list in key_lists]
+
+    ob_sets = [set(x) for x in ob_lists]
+    ob_set = set.intersection(*ob_sets)
+
+    if keep_duplicates == 'keep':
+        key_list = [key for key in key_list
+                    if DB_Key(
+                        session, key,
+                        fluor_sensitive=fluor_sensitive,
+                        anti_sensitive=anti_sensitive,
+                        keep_duplicates=keep_duplicates) in ob_set]
 
     return key_list
