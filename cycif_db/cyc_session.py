@@ -12,6 +12,7 @@ from .data_frame import CycDataFrame, get_headers_categorized
 from .markers import format_marker, Marker_Comparator
 from .model import (Cell, Marker, Marker_Alias, Sample,
                     Sample_Marker_Association)
+from .model.mapping import OTHER_FEATHERS
 from .utils import engine_maker
 
 
@@ -486,18 +487,19 @@ class CycSession(Session):
         Marker object or None.
         """
         name = marker.get('name')
-        fluor = marker.get('fluor', '') or ''
-        anti = marker.get('anti', '') or ''
-        duplicate = marker.get('duplicate', '') or ''
+        fluor = marker.get('fluor', '')
+        anti = marker.get('anti', '')
+        duplicate = marker.get('duplicate', '')
 
         marker = self.query(Marker) \
             .filter(func.lower(Marker.name) == name.lower()) \
             .filter((Marker.fluor == fluor)
-                    | (func.lower(Marker.fluor) == fluor.lower())) \
+                    | (func.lower(Marker.fluor) == str(fluor).lower())) \
             .filter((Marker.anti == anti)
-                    | (func.lower(Marker.anti) == anti.lower())) \
+                    | (func.lower(Marker.anti) == str(anti).lower())) \
             .filter((Marker.duplicate == duplicate)
-                    | (func.lower(Marker.duplicate) == duplicate.lower())) \
+                    | (func.lower(Marker.duplicate) ==
+                       str(duplicate).lower()))\
             .first()
         return marker
 
@@ -548,11 +550,11 @@ class CycSession(Session):
         -------
         Sample object.
         """
-        if not isinstance(id, (int, None)):
+        if not isinstance(id, (int, type(None))):
             raise ValueError("Invalid `id` was provided. The argument "
                              "must be int or None!")
         if isinstance(id, int):
-            sample = self.query(Sample).filter_by(id=id).first()
+            sample = self.query(Sample).get(id)
         elif name:
             sample = self.query(Sample) \
                 .filter(func.lower(Sample.name) == name.lower()) \
@@ -563,6 +565,7 @@ class CycSession(Session):
             raise ValueError("Neither `id` nor `name` was provided!")
 
         log.info(f"Retrived sample: {sample}!")
+        return sample
 
     def get_cells_for_sample(self, sample=None, name=None, tag=None,
                              to_path=None, **kwargs):
@@ -587,7 +590,7 @@ class CycSession(Session):
         -------
         pandas DataFrame object.
         """
-        if not isinstance(sample, (int, Sample)):
+        if not isinstance(sample, (int, Sample, type(None))):
             raise ValueError("The argument `sample` was provided, but it "
                              "was not a valid Sample object!")
         if not isinstance(sample, Sample):
@@ -595,25 +598,66 @@ class CycSession(Session):
 
         assert sample, ("No matching record found for the sample!")
 
-        feature_list = sample.feature_list.split(',')
-        feature_list = sorted(feature_list, key=column_sort_key)
-        feature_columns = [getattr(Cell, col) for col in feature_list]
+        other_features = sorted(list(OTHER_FEATHERS.keys()),
+                                key=column_sort_key)
+        cell_columns = [getattr(Cell, ftr) for ftr in other_features]
+        feature_list = self.get_sample_db_keys(sample)
+        cell_columns += [Cell.features[key] for key in feature_list]
 
-        data = self.query(Sample.name, Sample.tag, *feature_columns)\
+        data = self.query(Sample.name, Sample.tag, *cell_columns)\
             .join(Sample) \
-            .filter(Cell.sample_id == sample.id).all()
+            .filter(Cell.sample_id == sample.id) \
+            .order_by(Cell.sample_cell_id) \
+            .all()
 
+        marker_headers = [DB_Key(self, k, anti_sensitive=True).to_header()
+                          for k in feature_list]
         df = pd.DataFrame(
             data,
-            columns=['sample_name', 'sample_tag']+feature_list)
+            columns=(['sample_name', 'sample_tag'] + other_features
+                     + marker_headers))
 
         if to_path:
             df.to_csv(to_path, **kwargs)
 
         return df
 
+    def get_sample_db_keys(self, sample=None, name=None, tag=None):
+        """ get a Sample object
+
+        Parameters
+        ----------
+        id: int or None.
+            Index of sample in database.
+            Ignoring `name` and `tag` if this one is provided.
+        name: str or None.
+            Name of sample, ignoring cases. One of `id` and `name` must
+            be provided.
+        tag: str or None.
+            Tag of the sample, ignoring cases.
+
+        Returns
+        -------
+        List of db_keys.
+        """
+        if not isinstance(sample, (int, Sample, type(None))):
+            raise ValueError("The argument `sample` was provided, but it "
+                             "was not a valid Sample object!")
+        if not isinstance(sample, Sample):
+            sample = self.get_sample(id=sample, name=name, tag=tag)
+        rval = self.query(Cell.features) \
+            .filter(Cell.sample_id == sample.id).first()
+
+        rval = list(rval[0].keys())
+        rval = sorted(rval, key=lambda x: DB_Key(self, x, anti_sensitive=True))
+        return rval
+
     def get_cells_from_samples(self, samples=None, names=None, tags=None,
-                               column_filter='intersection', to_path=None,
+                               marker_filter='intersection',
+                               fluor_sensitive=True,
+                               anti_sensitive=False,
+                               keep_duplicates='keep',
+                               to_path=None,
                                **kwargs):
         """ Retrieve all cells data for a list of samples and convert to
             pandas DataFrame.
@@ -628,8 +672,14 @@ class CycSession(Session):
             must be provided.
         tags: list/tuple of str or None.
             Tag of the sample, ignoring cases.
-        column_filter: str
+        marker_filter: str
             One of ['intersection', 'union'].
+        fluor_sensitive: bool, default is True.
+            For comparing markers.
+        anti_sensitive: bool, default is False.
+            For comparing markers.
+        keep_duplicates: str.
+            For markers.
         to_path: str, default is None.
             If provided, this is the path to save the cells data.
         kwargs: Key words arguments
@@ -639,14 +689,14 @@ class CycSession(Session):
         -------
         pandas DataFrame object.
         """
-        if not isinstance(samples, (Iterable, None)):
+        if not isinstance(samples, (Iterable, type(None))):
             raise ValueError("The samples provided, `{samples}`, are not "
                              "iterable or None.")
 
-        if column_filter not in ('intersection', 'union'):
-            raise ValueError("Argument `column_filter` must be one of "
+        if marker_filter not in ('intersection', 'union'):
+            raise ValueError("Argument `marker_filter` must be one of "
                              "['intersection', 'union'], but got "
-                             "`{}`!".format(column_filter))
+                             "`{}`!".format(marker_filter))
 
         if samples:
             if isinstance(samples[0], int):
@@ -669,25 +719,31 @@ class CycSession(Session):
             raise ValueError("One of the `samples` and `names` must be "
                              "provided!")
 
-        feature_lists = [sample.feature_list.split(',') for sample in samples]
-        feature_lists = [set(x) for x in feature_lists]
-        if column_filter == 'intersection':
-            feature_list = set.intersection(*feature_lists)
-        else:
-            feature_list = set.union(*feature_lists)
-
-        feature_list = sorted(list(feature_list), key=column_sort_key)
-
-        feature_columns = [getattr(Cell, col) for col in feature_list]
         sample_ids = [sample.id for sample in samples]
+        other_features = sorted(list(OTHER_FEATHERS.keys()),
+                                key=column_sort_key)
+        cell_columns = [getattr(Cell, ftr) for ftr in other_features]
+        feature_lists = [self.get_sample_db_keys(sample) for sample in samples]
+        feature_list = fuse_db_keys(self, feature_lists,
+                                    marker_filter=marker_filter,
+                                    fluor_sensitive=fluor_sensitive,
+                                    anti_sensitive=anti_sensitive,
+                                    keep_duplicates=keep_duplicates)
+        cell_columns += [Cell.features[key] for key in feature_list]
 
-        data = self.query(Sample.name, Sample.tag, *feature_columns)\
+        data = self.query(Sample.name, Sample.tag, *cell_columns)\
             .join(Sample) \
-            .filter(Cell.sample_id.in_(sample_ids)).all()
+            .filter(Cell.sample_id.in_(sample_ids)) \
+            .order_by(Sample.name, Sample.tag, Cell.sample_cell_id) \
+            .all()
+
+        marker_headers = [DB_Key(self, k, anti_sensitive=True).to_header()
+                          for k in feature_list]
 
         df = pd.DataFrame(
             data,
-            columns=['sample_name', 'sample_tag']+feature_list)
+            columns=(['sample_name', 'sample_tag'] + other_features
+                     + marker_headers))
 
         if to_path:
             df.to_csv(to_path, **kwargs)
@@ -737,5 +793,63 @@ class DB_Key(object):
         return self.marker_comparator == other.marker_comparator \
             and self.mask_type == other.mask_type
 
+    def __lt__(self, other) -> bool:
+        if self.marker_comparator < other.marker_comparator:
+            return True
+        elif self.marker_comparator == other.marker_comparator:
+            return self.mask_type < other.mask_type
+        else:
+            False
+
     def __hash__(self) -> int:
         return self.marker_comparator.__hash__() + hash(self.mask_type)
+
+
+def fuse_db_keys(session, key_lists, marker_filter='intersection',
+                 fluor_sensitive=True, anti_sensitive=False,
+                 keep_duplicates='keep'):
+    """ Fuse multiple db_key lists from different samples to a single
+    list of keys.
+
+    Parameters
+    -----------
+    session: CycSession object.
+    key_lists: list of list of strs.
+    marker_filter: str
+        One of ['intersection', 'union']
+    fluor_sensitive: bool
+    anti_sensitive: bool
+    keep_duplicates: str
+
+    Returns
+    -------
+    List of strs.
+    """
+    if marker_filter == 'union':
+        key_sets = [set(x) for x in key_lists]
+        key_set = set.union(*key_sets)
+
+        key_list = sorted(list(key_set), key=lambda x: DB_Key(session, x))
+
+        return key_list
+
+    key_lists = [[DB_Key(session, key,
+                         fluor_sensitive=fluor_sensitive,
+                         anti_sensitive=anti_sensitive,
+                         keep_duplicates=keep_duplicates)
+                  for key in inner_list]
+                 for inner_list in key_lists]
+
+    key_sets = [set(x) for x in key_lists]
+    key_set = set.intersection(*key_sets)
+    obj_list = []
+    key_list = []
+    for inner_list in key_lists:
+        for ob in inner_list:
+            if ob in key_set and ob.key not in key_list:
+                obj_list.append(ob)
+                key_list.append(ob.key)
+    obj_list = sorted(obj_list)
+    key_list = [key_ob.key for key_ob in obj_list]
+
+    return key_list

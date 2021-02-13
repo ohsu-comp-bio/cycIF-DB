@@ -51,6 +51,9 @@ class Marker_Comparator:
 
         return rval
 
+    def __lt__(self, other) -> bool:
+        return repr(self).lower() < repr(other).lower()
+
     def __hash__(self) -> int:
         key = self.marker.name.lower()
         if self.fluor_sensitive and self.marker.fluor:
