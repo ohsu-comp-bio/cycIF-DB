@@ -99,7 +99,7 @@ class CycSession(Session):
         log.info("Added sample {}.".format(repr(sample)))
         return sample
 
-    def insert_cells_mappings(self, sample_id, cells, chunksize=2000,
+    def insert_cells_mappings(self, sample_id, cells, chunksize=10000,
                               **kwargs):
         """ Insert cell quantification data into cells table.
 
@@ -121,18 +121,22 @@ class CycSession(Session):
         marker_db_keys = [self.marker_header_to_dbkey(x) for x in markers]
         other_columns = [self.other_feature_to_dbcolumn(x) for x in others]
 
-        if isinstance(cells, str):
-            for df in pd.read_csv(cells, chunksize=chunksize, **kwargs):
-                self._batch_insert_cells_mappings(df, markers, marker_db_keys,
-                                                  others, other_columns,
-                                                  sample_id)
-
-        else:     # cells is DataFrame
-            for i in range(0, cells.shape[0], chunksize):
+        if isinstance(cells, DataFrame):
+            count = cells.shape[0]
+            for i in range(0, count, chunksize):
                 df = cells[i: i+chunksize]
                 self._batch_insert_cells_mappings(df, markers, marker_db_keys,
                                                   others, other_columns,
                                                   sample_id)
+        else:
+            count = 0
+            for df in pd.read_csv(cells, chunksize=chunksize, iterator=True,
+                                  **kwargs):
+                self._batch_insert_cells_mappings(df, markers, marker_db_keys,
+                                                  others, other_columns,
+                                                  sample_id)
+                count += df.shape[0]
+        log.info("Added total %d cell records!" % count)
 
     def _batch_insert_cells_mappings(self, dataframe, markers, marker_db_keys,
                                      others, other_columns, sample_id):
@@ -245,7 +249,7 @@ class CycSession(Session):
         log.info("Added %d entries of sample marker association!"
                  % len(associates))
 
-    def add_sample_complex(self, sample, cells, markers,
+    def add_sample_complex(self, sample, cells, markers, chunksize=10000,
                            dry_run=False, **kwargs):
         """ Insert the quantification result from a single sample
         into database, including cell quantification table and
@@ -259,6 +263,8 @@ class CycSession(Session):
             If str, it's path string to a csv file.
         markers: str or pandas.DataFrame object.
             If str, it's path string to a csv file.
+        chuncksize: int or None.
+            Used in `pd.read_csv`. Read in chunks.
         dry_run: bool, default is False.
             Whether to run the sample adding without commit.
         kwargs: keywords parameter.
@@ -274,7 +280,8 @@ class CycSession(Session):
              "against the unique constraint or it has invalid `id`!")
         try:
             sample = self.add_sample(sample)
-            self.insert_cells_mappings(sample.id, cells, **kwargs)
+            self.insert_cells_mappings(sample.id, cells, chunksize=chunksize,
+                                       **kwargs)
             self.insert_sample_markers(sample.id, markers, **kwargs)
             if not dry_run:
                 self.commit()
@@ -309,7 +316,7 @@ class CycSession(Session):
                 .filter(func.lower(Sample.name) == name.lower())\
                 .filter((Sample.tag == tag)
                         | (func.lower(Sample.tag) == str(tag).lower()))\
-                .delete()
+                .delete(synchronize_session='fetch')
 
         self.commit()
 

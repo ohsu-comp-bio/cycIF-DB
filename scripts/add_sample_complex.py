@@ -8,6 +8,7 @@ import argparse
 import logging
 import pathlib
 import sys
+import time
 
 work_dir = pathlib.Path(__file__).absolute().parent.parent
 sys.path.insert(1, str(work_dir))
@@ -91,6 +92,9 @@ log.info("The sample info: {}.".format(sample))
 log.info(f"The path to Cells: {cells_path}.")
 log.info(f"The path to Markers: {markers_path}.")
 
+start_time = time.time()
 with CycSession() as csess:
     csess.add_sample_complex(
         sample, cells_path, markers_path, dry_run=args.dry_run)
+end_time = time.time()
+log.info("Finished in %.10f s" % (end_time - start_time))
