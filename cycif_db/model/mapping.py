@@ -119,6 +119,9 @@ class Sample_Marker_Association(Base):
     marker_id = Column(Integer, ForeignKey("marker.id", onupdate="CASCADE"))
     channel_number = Column(Integer)
     cycle_number = Column(Integer)
+    filter = Column(String)
+    excitation_wavelength = Column(Integer)
+    emission_wavelength = Column(Integer)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sample = relationship("Sample", back_populates="marker_associates")

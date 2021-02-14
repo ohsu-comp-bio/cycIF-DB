@@ -233,6 +233,8 @@ class CycSession(Session):
         elif not isinstance(markers, DataFrame):
             raise ValueError("Unsupported datatype for markers!")
 
+        markers.columns = markers.columns.map(lambda x: x.lower())
+
         associates = []
         for i, row in markers.iterrows():
             marker_id = self.get_alias_marker_id(row['marker_name'])
@@ -240,7 +242,11 @@ class CycSession(Session):
                 'sample_id': sample_id,
                 'marker_id': marker_id,
                 'channel_number': row['channel_number'],
-                'cycle_number': row['cycle_number']
+                'cycle_number': row['cycle_number'],
+                'filter': row.get('filter', None),
+                'excitation_wavelength':
+                    row.get('excitation_wavelength', None),
+                'emission_wavelength': row.get('emission_wavelength', None)
             }
             associates.append(asso)
 
