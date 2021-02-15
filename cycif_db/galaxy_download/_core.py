@@ -9,9 +9,7 @@ from ..utils import get_configs
 log = logging.getLogger(__name__)
 
 
-def download_datasets(destination, *datasets, server=None, api_key=None):
-    """ download datasets from galaxy server
-    """
+def galaxy_client(server=None, api_key=None):
     configs = get_configs()
 
     if not server:
@@ -25,21 +23,33 @@ def download_datasets(destination, *datasets, server=None, api_key=None):
     if not api_key:
         raise Exception("Argument `api` was not privided! Use `--help` for help."
                         "The parameter can be set in `config.yml` as well.")
-
-    folder = pathlib.Path(destination)
-    if folder.exists() and folder.is_dir():
-        raise Exception("The target folder `{folder}` has already existed!")
-    log.info(f"Create folder `{folder}`.")
-    folder.mkdir(parents=True, exist_ok=False)
-
     gi = galaxy.GalaxyInstance(url=server, key=api_key)
+    return gi
+
+
+def download_datasets(destination, *datasets, server=None, api_key=None,
+                      galaxy_client=None):
+    """ download datasets from galaxy server
+    """
+    gi = galaxy_client
+    if not gi:
+        gi = galaxy_client(server=server, api_key=api_key)
     dataset_cli = galaxy.datasets.DatasetClient(gi)
     his_cli = galaxy.histories.HistoryClient(gi)
 
+    if isinstance(destination, str):
+        destination = pathlib.Path(destination)
+    if destination.exists() and destination.is_dir():
+        raise Exception("The target folder `%s` has already existed!"
+                        % str(destination))
+    log.info("Create folder `%s`." % str(destination))
+    destination.mkdir(parents=True, exist_ok=False)
+
     for dataset_id in datasets:
         log.info("Connect to server `%s`. Downloading dataset `%s`"
-                 % (server, dataset_id))
-        dataset_cli.download_dataset(dataset_id, folder, use_default_filename=True)
+                 % (gi.url, dataset_id))
+        dataset_cli.download_dataset(dataset_id, str(destination),
+                                     use_default_filename=True)
 
     annotation = {"server": server}
     history_id = dataset_cli.show_dataset(dataset_id)['history_id']
@@ -48,5 +58,5 @@ def download_datasets(destination, *datasets, server=None, api_key=None):
     annotation['history_username_and_slug'] = history_username_and_slug
     annotation['datasets'] = datasets
 
-    with open(folder.joinpath('annotation.txt'), 'w') as fp:
+    with open(destination.joinpath('annotation.txt'), 'w') as fp:
         json.dump(annotation, fp)

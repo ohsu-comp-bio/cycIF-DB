@@ -1,11 +1,11 @@
-""" Download quantification result datasets from a Galaxy server
+""" Download datasets from SANDANA samples from Galaxy server
 
-python scripts/download_datasets.py --help
+python scripts/download_sandana_datasets.py --help
 """
 import argparse
 import logging
 
-from cycif_db.galaxy_download import download_datasets
+from cycif_db.galaxy_download import download_sandana
 
 parser = argparse.ArgumentParser()
 
@@ -19,9 +19,6 @@ parser.add_argument(
     'destination', type=str,
     help="The folder to save the downloaded files.")
 parser.add_argument(
-    'datasets', type=str, nargs='+',
-    help="Dataset IDs in Galaxy.")
-parser.add_argument(
     '-v', '--verbose', default=False, action='store_true',
     help="Show detailed log.")
 
@@ -30,5 +27,4 @@ args = parser.parse_args()
 if args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
-download_datasets(args.destination, *args.datasets,
-                  server=args.server, api_key=args.api_key)
+download_sandana(args.destination, server=args.server, api_key=args.api_key)
