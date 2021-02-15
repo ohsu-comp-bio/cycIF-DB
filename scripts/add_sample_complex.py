@@ -7,14 +7,11 @@ python scripts/add_sample_complex.py --help
 import argparse
 import logging
 import pathlib
-import sys
 import time
 
-work_dir = pathlib.Path(__file__).absolute().parent.parent
-sys.path.insert(1, str(work_dir))
 from cycif_db import CycSession
 
-logging.basicConfig(level=logging.DEBUG)
+
 log = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
@@ -38,8 +35,14 @@ parser.add_argument(
     help=("If enabled, run the add_sample_complex script without "
           "committing. Database will not be changed, as a result.")
 )
+parser.add_argument(
+    '-v', '--verbose', default=False, action='store_true',
+    help="Show detailed log.")
 
 args = parser.parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
 
 folder = args.dir
 sample_annotation = ''
