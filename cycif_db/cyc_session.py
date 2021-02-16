@@ -477,7 +477,8 @@ class CycSession(Session):
         else:
             raise ValueError("Neither `id` nor `name` was provided!")
 
-        log.info(f"Retrived sample: {sample}!")
+        log.info(f"Retrieved sample: {sample}!")
+        return sample
 
     def get_cells_for_sample(self, sample=None, name=None, tag=None,
                              to_path=None, **kwargs):
