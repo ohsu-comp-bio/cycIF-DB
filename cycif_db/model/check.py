@@ -1,5 +1,5 @@
 import logging
-import os.path
+import os
 import sys
 
 from alembic import command, config
@@ -142,7 +142,9 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
     """ Create database using alembic APIs
     """
     configs = get_configs()
-    if url is None:
+    if url is not None:
+        os.environ['db_url'] = url
+    else:
         url = configs['db_url']
     if auto_migrate is None:
         auto_migrate = configs['auto_migrate']
@@ -189,7 +191,7 @@ def create_db(url=None, engine_options={}, auto_migrate=None):
         return
     expect_msg = "Your database has reversion '%s' but this code expects "\
                  "version '%s'" % (current_version, script_head)
-    if int(current_version) > int(script_head):
+    if int(current_version or 0) > int(script_head):
         cmd_msg = "alembic downgrade %s" % script_head
     else:
         cmd_msg = "alembic upgrade head"
