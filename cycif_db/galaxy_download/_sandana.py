@@ -6,7 +6,10 @@ import requests
 import sys
 
 from bioblend import galaxy
-from ._core import galaxy_client, download_datasets
+from ._core import (
+    galaxy_client,
+    download_datasets,
+    find_markers_csv_and_quantification)
 
 
 log = logging.getLogger(__name__)
@@ -23,77 +26,6 @@ def is_sandana_history(name):
         Name of a galaxy history.
     """
     return re.search('WD-\d{5}-\d{3}', name, flags=re.I) is not None
-
-
-def find_markers_csv_and_quantification(his_client, history_id):
-    """ Find two datasets martching `markers.csv` and quantifiation.
-
-    Parameters
-    -----------
-    his_client: HistoryClient object.
-        From `bioblend.galaxy.histories.HistoryClient`.
-    history_id: str
-        Galaxy history id.
-
-    Returns
-    --------
-    None or tuple of dataset_ids ({quantification}, {markers_csv}).
-    """
-    contents = his_client.show_history(history_id, contents=True, deleted=False)
-    contents = [dataset for dataset in contents if dataset['state'] == 'ok']
-
-    def is_naivestate(name) -> bool:
-        """ check whether a dataset name in galaxy history is states
-        result from cycif.
-        """
-        name = name.lower()
-        return 'states' in name
-
-    def is_quantification(name) -> bool:
-        """ check whether a dataset name in galaxy history is quantification
-        result from cycif.
-        """
-        name = name.lower()
-        return 'quantification' in name
-
-    def is_marker_csv(name) -> bool:
-        """ whether a dataset name in galaxy history is `markers.csv`
-        for cycif.
-
-        name: str
-            Name of a galaxy dataset.
-        """
-        name = name.lower()
-        return 'markers.csv' in name and 'typemap' not in name
-
-    # last one Ok
-    last_dataset = contents[0]
-    for dataset in contents:
-        if (dataset['hid'] or 0) > (last_dataset['hid'] or 0):
-            last_dataset = dataset
-    if not is_naivestate(last_dataset['name']) \
-            or last_dataset['extension'] != 'png':
-        log.warn("Error: make sure the history is completed successfully!")
-        return
-
-    # find marker.csv
-    markers_dataset = [dataset for dataset in contents
-                       if is_marker_csv(dataset['name'])
-                       and dataset['extension'] == 'csv']
-    if len(markers_dataset) != 1:
-        log.warn("Expected one and only one `markers.csv` dataset in the input "
-                 "history, but got %d datasets." % len(markers_dataset))
-        return
-
-    # find quantification dataset
-    quant_dataset = [dataset for dataset in contents
-                     if is_quantification(dataset['name'])
-                     and dataset['extension'] == 'csv']
-    if len(quant_dataset) != 1:
-        log.warn("Expected one and only one quantification dataset in the input "
-                 "history, but got %d datasets." % len(quant_dataset))
-        return
-    return (quant_dataset[0], markers_dataset[0])
 
 
 def get_sample_name(history_name):

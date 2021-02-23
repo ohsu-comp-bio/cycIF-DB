@@ -60,3 +60,75 @@ def download_datasets(destination, *datasets, server=None, api_key=None,
 
     with open(destination.joinpath('annotation.txt'), 'w') as fp:
         json.dump(annotation, fp)
+
+
+def find_markers_csv_and_quantification(his_client, history_id,
+                                        check_naive_state=1):
+    """ Find two datasets martching `markers.csv` and quantifiation.
+
+    Parameters
+    -----------
+    his_client: HistoryClient object.
+        From `bioblend.galaxy.histories.HistoryClient`.
+    history_id: str
+        Galaxy history id.
+    check_naive_state: int, default=1.
+        check whether naive state dataset exists in last number of datasets
+        in the history.
+    Returns
+    --------
+    None or tuple of dataset_ids ({quantification}, {markers_csv}).
+    """
+    contents = his_client.show_history(history_id, contents=True, deleted=False)
+    contents = [dataset for dataset in contents if dataset['state'] == 'ok']
+
+    def is_naivestate(dataset_meta) -> bool:
+        """ check whether a dataset name in galaxy history is states
+        result from cycif.
+        """
+        name = dataset_meta['name'].lower()
+        return 'states' in name and dataset_meta['extension'] == 'png'
+
+    def is_quantification(dataset_meta) -> bool:
+        """ check whether a dataset name in galaxy history is quantification
+        result from cycif.
+        """
+        name = dataset_meta['name'].lower()
+        return 'quantification' in name and dataset_meta['extension'] == 'csv'
+
+    def is_marker_csv(dataset_meta) -> bool:
+        """ whether a dataset name in galaxy history is `markers.csv`
+        for cycif.
+
+        name: str
+            Name of a galaxy dataset.
+        """
+        name = dataset_meta['name'].lower()
+        return 'markers.csv' in name and 'typemap' not in name \
+            and dataset_meta['extension'] == 'csv'
+
+    # naive_state in last 5 datasets
+    ns_dataset = [dataset for dataset in contents if dataset['hid']]
+    ns_dataset = [dataset for dataset in ns_dataset[-check_naive_state:]
+                  if is_naivestate(dataset)]
+
+    if not ns_dataset:
+        log.warn("Error: make sure the history is completed successfully!")
+        return
+
+    # find marker.csv
+    markers_dataset = [dataset for dataset in contents
+                       if is_marker_csv(dataset)]
+    if len(markers_dataset) != 1:
+        log.warn("Expected one and only one `markers.csv` dataset in the input "
+                 "history, but got %d datasets." % len(markers_dataset))
+        return
+
+    # find quantification dataset
+    quant_dataset = [dataset for dataset in contents
+                     if is_quantification(dataset)]
+    if len(quant_dataset) != 1:
+        log.warn("Expected one and only one quantification dataset in the input "
+                 "history, but got %d datasets." % len(quant_dataset))
+        return
+    return (quant_dataset[0], markers_dataset[0])
