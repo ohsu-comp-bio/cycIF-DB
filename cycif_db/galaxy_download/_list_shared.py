@@ -92,7 +92,9 @@ class SharedGalaxy(GalaxyDriver):
         """
         rval = []
         for tds in self.history_rows:
+            self.driver.execute_script("arguments[0].scrollIntoView()", tds[0])
             tds[0].click()
+            log.info("Click history row %s" % tds[0].text)
             popmenu = WebDriverWait(self.driver, self.wait_time).until(
                 EC.presence_of_element_located((By.CLASS_NAME, 'popmenu-wrapper')))
             view_e = popmenu.find_element(By.LINK_TEXT, 'View')
@@ -100,7 +102,8 @@ class SharedGalaxy(GalaxyDriver):
             his_id = link.split('id=')[1]
             his_name = tds[0].text
             rval.append((his_name, his_id))
-            self.driver.find_element(By.ID, 'grid-table-body').click()
+            # remove the popmenu
+            tds[2].click()
 
         return rval
 

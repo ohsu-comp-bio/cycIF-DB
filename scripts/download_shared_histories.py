@@ -32,5 +32,5 @@ if args.verbose:
 if args.debug:
     logging.basicConfig(level=logging.DEBUG)
 
-shared = SharedGalaxy(headless=False)
+shared = SharedGalaxy(browser='Chrome', headless=True, cutoff_time='2021-01-13')
 shared.download(args.destination, server=args.server, api_key=args.api_key)
