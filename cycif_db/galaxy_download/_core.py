@@ -1,8 +1,11 @@
+import getpass
 import json
 import logging
 import pathlib
 
 from bioblend import galaxy
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 from ..utils import get_configs
 
 
@@ -79,7 +82,8 @@ def find_markers_csv_and_quantification(his_client, history_id,
     --------
     None or tuple of dataset_ids ({quantification}, {markers_csv}).
     """
-    contents = his_client.show_history(history_id, contents=True, deleted=False)
+    contents = his_client.show_history(history_id, contents=True,
+                                       deleted=False, types=['dataset'])
     contents = [dataset for dataset in contents if dataset['state'] == 'ok']
 
     def is_naivestate(dataset_meta) -> bool:
@@ -104,7 +108,7 @@ def find_markers_csv_and_quantification(his_client, history_id,
             Name of a galaxy dataset.
         """
         name = dataset_meta['name'].lower()
-        return 'markers.csv' in name and 'typemap' not in name \
+        return 'markers.csv' in name and 'type' not in name \
             and dataset_meta['extension'] == 'csv'
 
     # naive_state in last 5 datasets
@@ -113,7 +117,8 @@ def find_markers_csv_and_quantification(his_client, history_id,
                   if is_naivestate(dataset)]
 
     if not ns_dataset:
-        log.warn("Error: make sure the history is completed successfully!")
+        log.warn("Error: make sure the history is completed successfully! %s."
+                 % history_id)
         return
 
     # find marker.csv
@@ -121,7 +126,8 @@ def find_markers_csv_and_quantification(his_client, history_id,
                        if is_marker_csv(dataset)]
     if len(markers_dataset) != 1:
         log.warn("Expected one and only one `markers.csv` dataset in the input "
-                 "history, but got %d datasets." % len(markers_dataset))
+                 "history, but got %d datasets. %s."
+                 % (len(markers_dataset), history_id))
         return
 
     # find quantification dataset
@@ -129,6 +135,45 @@ def find_markers_csv_and_quantification(his_client, history_id,
                      if is_quantification(dataset)]
     if len(quant_dataset) != 1:
         log.warn("Expected one and only one quantification dataset in the input "
-                 "history, but got %d datasets." % len(quant_dataset))
+                 "history, but got %d datasets. %s."
+                 % (len(quant_dataset), history_id))
         return
     return (quant_dataset[0], markers_dataset[0])
+
+
+class GalaxyDriver(object):
+    """ Access galaxy content with selenium webdriver
+    """
+    def __init__(self, brower='Chrome', headless=True, server=None,
+                 username=None, password=None, **kwargs) -> None:
+        if brower not in ['Chrome', 'Firefox']:
+            raise ValueError("The `brower` mush be one of ['Chrom', 'Firefox']!")
+        self.brower = brower
+        self.headless = headless
+        if not server:
+            server = get_configs()['galaxy_server']
+        if not server.endswith('/'):
+            server += '/'
+        self.server = server
+        self.username = username
+        self.kwargs = kwargs
+
+        options = getattr(webdriver, brower+'Options')()
+        options.headless = self.headless
+        self.driver = getattr(webdriver, brower)(options=options, **kwargs)
+
+        self._login(self.username, password)
+
+    def _login(self, username=None, password=None):
+        url = self.server + 'user/login'
+        self.driver.get(url)
+
+        if not username:
+            username = input("Username / Email Address:")
+        if not password:
+            password = getpass.getpass()
+
+        self.driver.find_element_by_xpath('//*[@id="login"]/div[1]/input[1]')\
+            .send_keys(username)
+        self.driver.find_element_by_name('password').send_keys(password + Keys.RETURN)
+        log.info(f"Logging for user: {username}.")
