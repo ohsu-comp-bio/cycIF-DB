@@ -144,11 +144,11 @@ def find_markers_csv_and_quantification(his_client, history_id,
 class GalaxyDriver(object):
     """ Access galaxy content with selenium webdriver
     """
-    def __init__(self, brower='Chrome', headless=True, server=None,
+    def __init__(self, browser='Chrome', headless=True, server=None,
                  username=None, password=None, **kwargs) -> None:
-        if brower not in ['Chrome', 'Firefox']:
-            raise ValueError("The `brower` mush be one of ['Chrom', 'Firefox']!")
-        self.brower = brower
+        if browser not in ['Chrome', 'Firefox']:
+            raise ValueError("The `browser` mush be one of ['Chrom', 'Firefox']!")
+        self.browser = browser
         self.headless = headless
         if not server:
             server = get_configs()['galaxy_server']
@@ -158,9 +158,9 @@ class GalaxyDriver(object):
         self.username = username
         self.kwargs = kwargs
 
-        options = getattr(webdriver, brower+'Options')()
+        options = getattr(webdriver, browser+'Options')()
         options.headless = self.headless
-        self.driver = getattr(webdriver, brower)(options=options, **kwargs)
+        self.driver = getattr(webdriver, browser)(options=options, **kwargs)
 
         self._login(self.username, password)
 

@@ -23,11 +23,11 @@ log = logging.getLogger(__name__)
 class SharedGalaxy(GalaxyDriver):
     """ Operate on `list_shared` histories.
     """
-    def __init__(self, brower='Chrome', headless=True, server=None,
+    def __init__(self, browser='Chrome', headless=True, server=None,
                  username=None, password=None, wait_time=10,
                  cutoff_time='2021-01-01',
                  **kwargs) -> None:
-        super().__init__(brower=brower, headless=headless, server=server,
+        super().__init__(browser=browser, headless=headless, server=server,
                          username=username, password=password, **kwargs)
 
         self.wait_time = wait_time
