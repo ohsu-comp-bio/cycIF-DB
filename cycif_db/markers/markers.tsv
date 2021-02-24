@@ -101,11 +101,15 @@ Col_IV				ColIV, Col4, CollagenIV, Collagen IV
 Col_IV	647			CollagenIV_647
 Cyc_A2				CyclinA2, Cyclin_A2, CycA2
 Cyc_B1				CyclinB1, Cyclin_B1, CycB1
-Cyc_D1				CyclinD1, Cyclin_D1, CycD1
+Cyc_D1				CyclinD1, Cyclin_D1, CycD1, Cyc_D1
 DAPI				DAPI
 DAPI			1	DAPI_1
 DAPI			10	DAPI_10
 DAPI			11	DAPI_11
+DAPI			12	DAPI_12
+DAPI			13	DAPI_13
+DAPI			14	DAPI_14
+DAPI			15	DAPI_15
 DAPI			2	DAPI_2
 DAPI			3	DAPI_3
 DAPI			4	DAPI_4
@@ -123,9 +127,9 @@ EGFR				EGFR
 EGFR_pY1068				pEGFR(Y1068)
 EGFR_pY1173				EGFR_pY1173
 ER				ER
-ERK1				ERK_1
-ERK1			1	ERK_1_1
-ERK1			2	ERK_1_2
+ERK1				ERK_1, ERK1
+ERK1			1	ERK_1_1, ERK1_1
+ERK1			2	ERK_1_2, ERK1_2
 ERK_pT202_Y204				ERK_1(pT202;pY204), ERK_1(pT202; pY204), ERK_1_(pT202;pY204)
 ERK_pT202_Y204			1	ERK_1_(pT202;pY204)_1
 ERK_pT202_Y204			2	ERK_1_(pT202;pY204)_2
@@ -145,7 +149,7 @@ GATA3				GATA_3, GATA3
 GFAP				GFAP
 GSK3b_pS9				GSK3_b_pS9
 Glut1				Glut1
-Granzyme_B				GranzymeB, GRNZB, GrB
+Granzyme_B				GranzymeB, GRNZB, GrB, Granzyme_B
 H2A_X				H2A_X, H2A.X
 H2ax_pS139				H2ax(S139), H2A.X_(pS139), H2A_X_(pS139)
 H3K27				H3K27
@@ -182,8 +186,8 @@ Ki67				Ki_67, Ki-67, Ki67
 Ki67	488			Ki67_488
 Ki67	570			Ki67_570
 LAG3				LAG_3, LAG-3, LAG3
-LAG3			1	LAG_3_1
-LAG3			2	LAG_3_2
+LAG3			1	LAG_3_1, LAG3_1
+LAG3			2	LAG_3_2, LAG3_2
 LAMP2				LAMP2
 LC3				LC3
 LaminABC	488			LaminABC_488
@@ -233,6 +237,11 @@ Perforin				Perforin
 PgR				PgR
 RAD51				RAD51
 RAS_KHN				RAS(K,H,N)
+R0c2				R0c2
+R0c3				R0c3
+R0c4				R0c4
+R0c5				R0c5
+R1c2				R1c2
 RB				Rb
 RB_pS807_S811				pRB(S807/811), Rb_(pS807;pS811), Rb(pS807;pS811)
 RORgt				RORgt
@@ -279,6 +288,7 @@ c_MET				c_MET
 gH2ax				gH2ax
 mTOR				mTOR
 mTOR_pS2448				pmTOR(S2448)
+pAKT				pAKT
 pATM				pATM
 pCHK1				pCHK1
 pErk				pErk
