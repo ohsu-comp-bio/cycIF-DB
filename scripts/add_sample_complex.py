@@ -5,6 +5,7 @@ Help:
 python scripts/add_sample_complex.py --help
 """
 import argparse
+import json
 import logging
 import pathlib
 import time
@@ -89,7 +90,7 @@ sample = dict(name=sample_args[0].strip())
 if len(sample_args) > 1:
     sample['tag'] = sample_args[1].strip()
 if sample_annotation:
-    sample['annotation'] = sample_annotation.strip()
+    sample['annotation'] = json.loads(sample_annotation.strip())
 
 log.info("The sample info: {}.".format(sample))
 log.info(f"The path to Cells: {cells_path}.")

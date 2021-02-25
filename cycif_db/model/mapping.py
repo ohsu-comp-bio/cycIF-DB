@@ -43,7 +43,7 @@ class Sample(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, nullable=False)
     tag = Column(String)
-    annotation = Column(String)
+    annotation = Column(JSONB)
     entry_at = Column(DateTime(timezone=True), server_default=func.now())
 
     cells = relationship('Cell', back_populates='sample')
