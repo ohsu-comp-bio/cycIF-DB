@@ -1,9 +1,7 @@
-import json
 import logging
 import pathlib
 import re
 import requests
-import sys
 
 from bioblend import galaxy
 from ._core import (
