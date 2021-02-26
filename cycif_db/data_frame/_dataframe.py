@@ -14,7 +14,7 @@ HEADER_MARKER_NAME = 'marker_name'
 HEADER_SUFFIX_MAPPING = {
     '_+nuclei[\s_-]*masks$': '__nuclei_masks',
     '_+cell[\s_-]*masks$': '__cell_masks',
-    '_+cellpose[\s_-]*masks[\s_-]*on[\s_-]*data[\s_-]*\d*$': '__nuclei_masks',
+    '_+(cellpose|cp)[\s_-]*masks([\s_-]*on[\s_-]*data[\s_-]*\d*)*$': '__nuclei_masks',
 }
 
 

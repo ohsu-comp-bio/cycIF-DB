@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 HEADER_SUFFIX_MAPPING = {
     '_+nuclei[\s_-]*masks$': '_nu',
     '_+cell[\s_-]*masks$': '_cl',
-    '_+cellpose[\s_-]*masks[\s_-]*on[\s_-]*data[\s_-]*\d*$': '_nu',
+    '_+(cellpose|cp)[\s_-]*masks([\s_-]*on[\s_-]*data[\s_-]*\d*)*$': '_nu',
 }
 
 

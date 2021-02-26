@@ -57,7 +57,7 @@ if folder:
     cells_path, markers_path = '', ''
     for fl in folder.iterdir():
         fl_name = fl.name.lower()
-        if 'quantification' in fl_name:
+        if 'quantification' in fl_name or '_quant.csv' in fl_name:
             cells_path = str(fl.absolute())
         elif 'markers.csv' in fl_name:
             markers_path = str(fl.absolute())

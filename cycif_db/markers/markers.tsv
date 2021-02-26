@@ -103,6 +103,7 @@ Cyc_A2				CyclinA2, Cyclin_A2, CycA2
 Cyc_B1				CyclinB1, Cyclin_B1, CycB1
 Cyc_D1				CyclinD1, Cyclin_D1, CycD1, Cyc_D1
 DAPI				DAPI
+DAPI			0	DAPI_0
 DAPI			1	DAPI_1
 DAPI			10	DAPI_10
 DAPI			11	DAPI_11
