@@ -51,6 +51,12 @@ alembic revision --autogenerate -m "{slug}" --rev-id {id}
 python scripts/download_datasets.py {sample_name} {datasets_id} [{datasets_id} ...]
 ```
 
+##### Load or update markers and their aliases
+
+```
+python scripts/insert_or_sync_stock_markers.py
+```
+
 ##### Add a sample compex into database
 
 ```
