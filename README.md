@@ -92,7 +92,7 @@ df = csess.get_cells_for_sample(sample/sample_id, to_path=None)
 ##### Output a pandas DataFrame for all common features associated with multiple samples
 
 ```
-df = csess.get_cells_from_samples(sample_list/sample_id_list, column_filter='intersection', to_path=None)
+df = csess.get_cells_from_samples(sample_list/sample_id_list, marker_filter='intersection', to_path=None)
 ```
 
 ##### Close session object
