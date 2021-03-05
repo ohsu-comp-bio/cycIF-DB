@@ -1,6 +1,7 @@
 ansible
 alembic==1.4.3
 bioblend==0.15.0
+click==7.1.2
 pandas==1.1.5
 # For installing psycopg2 in virtualenv, use
 # ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future

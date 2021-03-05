@@ -1,3 +1,6 @@
+""" Create database and initiate tables.
+"""
+
 import logging
 import pathlib
 import sys

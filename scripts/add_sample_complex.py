@@ -1,5 +1,4 @@
-""" Input result data from cycIF, csv file or DataFrame,
-into database.
+""" Ingest cycif quantification result datasets into database.
 
 Help:
 python scripts/add_sample_complex.py --help

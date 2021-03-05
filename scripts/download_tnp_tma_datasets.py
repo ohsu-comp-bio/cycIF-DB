@@ -1,4 +1,4 @@
-""" Download datasets from SANDANA samples from Galaxy server
+""" Download datasets from TNP-TMA samples from Galaxy server.
 
 python scripts/download_sandana_datasets.py --help
 """

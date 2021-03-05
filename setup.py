@@ -35,6 +35,11 @@ setup(name='cycIF-DB',
       url='https://github.com/ohsu-comp-bio/cycIF-DB',
       packages=find_packages(
           exclude=['tests*', 'test-data*', 'examples']),
+      entry_points={
+          'console_scripts': [
+              'cycif_db = cycif_db.__main__:main',
+          ],
+      },
       package_data={
           '': ['README.md',
                'requirements.txt',

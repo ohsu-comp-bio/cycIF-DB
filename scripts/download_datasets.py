@@ -1,4 +1,4 @@
-""" Download quantification result datasets from a Galaxy server
+""" Download quantification result datasets from a Galaxy history.
 
 python scripts/download_datasets.py --help
 """
