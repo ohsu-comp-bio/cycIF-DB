@@ -177,3 +177,15 @@ class GalaxyDriver(object):
             .send_keys(username)
         self.driver.find_element_by_name('password').send_keys(password + Keys.RETURN)
         log.info(f"Logging for user: {username}.")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type_, value, traceback):
+        self.driver.quit()
+
+    def close(self):
+        self.driver.close()
+
+    def quit(self):
+        self.driver.quit()

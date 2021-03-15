@@ -42,6 +42,7 @@ def setup():
 
 
 def teardown():
+    csess.close()
     drop_database(url)
 
 
