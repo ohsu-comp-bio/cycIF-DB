@@ -54,7 +54,7 @@ def download_datasets(destination, *datasets, server=None, api_key=None,
         dataset_cli.download_dataset(dataset_id, str(destination),
                                      use_default_filename=True)
 
-    annotation = {"server": server}
+    annotation = {"server": server or gi.url[:-4]}
     history_id = dataset_cli.show_dataset(dataset_id)['history_id']
     history_username_and_slug = \
         his_cli.show_history(history_id)['username_and_slug']
