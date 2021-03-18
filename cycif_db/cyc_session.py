@@ -598,6 +598,35 @@ class CycSession(Session):
         log.info(f"Retrived sample: {sample}!")
         return sample
 
+    def search_sample(self, q):
+        """ Search all samples matching the query.
+
+        Parameters
+        -----------
+        q: str
+        """
+        rval = self.query(Sample)\
+            .filter(Sample.name.ilike(f'%{q}%')
+                    | Sample.tag.ilike(f'%{q}%'))\
+            .all()
+
+        return rval
+
+    def search_marker(self, q):
+        """ Search all markers that match the query.
+
+        Parameters
+        -----------
+        q: str
+        """
+        rval = self.query(Marker)\
+            .filter(Marker.name.ilike(f'%{q}%')
+                    | Marker.fluor.ilike(f'%{q}%')
+                    | Marker.anti.ilike(f'%{q}%'))\
+            .all()
+
+        return rval
+
     def get_cells_for_sample(self, sample=None, name=None, tag=None,
                              to_path=None, **kwargs):
         """ Retrieve all cells for a sample and convert to pandas DataFrame.
