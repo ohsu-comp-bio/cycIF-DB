@@ -1,12 +1,9 @@
-import json
 import logging
 import pathlib
 import re
-import requests
-import sys
 
 from bioblend import galaxy
-from datetime import datetime
+from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -14,6 +11,7 @@ from ._core import (
     GalaxyDriver,
     download_datasets,
     find_markers_csv_and_quantification,
+    find_markers_csv_and_quantification_v2,
     galaxy_client)
 
 
@@ -73,8 +71,25 @@ class SharedGalaxy(GalaxyDriver):
 
         if n_ok < min_OKs:
             return False
+        try:
+            time_str = tds[3].text
+            update_time = datetime.strptime(time_str, '%b %d, %Y')
+        except ValueError:
+            now = datetime.now()
+            match = re.match('(?P<days>\d+)\s+day(s)?\s+ago$', time_str, flags=re.I)
+            if match:
+                days = match.group('days')
+                update_time = now - timedelta(float(days))
+            else:
+                match = re.match(
+                    '(?P<hours>\d+)\s+hour(s)?\s+ago$', time_str, flags=re.I)
+                if match:
+                    hours = match.group('hours')
+                    update_time = now - timedelta(hours=float(hours))
+                else:
+                    log.error("The update time was either invalid or just now!")
+                    return False
 
-        update_time = datetime.strptime(tds[3].text, '%b %d, %Y')
         cutoff_time = datetime.strptime(cutoff_time, '%Y-%m-%d')
         if update_time < cutoff_time:
             log.info("This row of history is older than the cutoff time `%s`: %s"
@@ -140,19 +155,37 @@ class SharedGalaxy(GalaxyDriver):
         log.info(f"Generate sample name `{rval}`.")
         return rval
 
-    def download(self, destinatin, server=None, api_key=None):
+    def download(self, destinatin, server=None, api_key=None, version='2'):
         gi = galaxy_client(server=server, api_key=api_key)
         his_cli = galaxy.histories.HistoryClient(gi)
         folder = pathlib.Path(destinatin)
+        if version == '2':
+            _func = find_markers_csv_and_quantification_v2
+        else:
+            _func = find_markers_csv_and_quantification
         for his_name, his_id in self.get_history_names_and_ids():
-            markers_and_quants = find_markers_csv_and_quantification(
-                his_cli, his_id, check_naive_state=6)
+            print(_func)
+            markers_and_quants = _func(his_cli, his_id, check_naive_state=6)
             if not markers_and_quants:
                 continue
             dataset_ids = [dataset['id'] for dataset in markers_and_quants]
             sample_name = SharedGalaxy.get_sample_name(his_name)
-            destination = folder.joinpath(sample_name).absolute()
-            try:
-                download_datasets(destination, *dataset_ids, galaxy_client=gi)
-            except Exception as e:
-                log.warn(e)
+            if len(dataset_ids) == 2:
+                destination = folder.joinpath(sample_name).absolute()
+                try:
+                    download_datasets(destination, *dataset_ids, galaxy_client=gi)
+                except Exception as e:
+                    log.warn(e)
+            else:
+                cp_dataset_ids = [dataset_ids[0], dataset_ids[2]]
+                destination = folder.joinpath(sample_name + '_' + 'cellpose').absolute()
+                try:
+                    download_datasets(destination, *cp_dataset_ids, galaxy_client=gi)
+                except Exception as e:
+                    log.warn(e)
+                s3_dataset_ids = [dataset_ids[1], dataset_ids[2]]
+                destination = folder.joinpath(sample_name + '_' + 's3').absolute()
+                try:
+                    download_datasets(destination, *s3_dataset_ids, galaxy_client=gi)
+                except Exception as e:
+                    log.warn(e)

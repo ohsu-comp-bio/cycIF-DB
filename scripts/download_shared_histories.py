@@ -19,10 +19,13 @@ parser.add_argument(
     'destination', type=str,
     help="The folder to save the downloaded files.")
 parser.add_argument(
-    '-c', '--cutoff_time', type=str,
+    '-t', '--cutoff_time', type=str, default='2021-02-06',
     help="Download histories whose update time are later than cutoff time.")
 parser.add_argument(
-    '-v', '--verbose', default=False, action='store_true',
+    '-v', '--version', type=str, default='2',
+    help="Download histories whose update time are later than cutoff time.")
+parser.add_argument(
+    '-w', '--verbose', default=False, action='store_true',
     help="Show detailed log.")
 parser.add_argument(
     '-vv', '--debug', default=False, action='store_true',
@@ -35,10 +38,8 @@ if args.verbose:
 if args.debug:
     logging.basicConfig(level=logging.DEBUG)
 
-cutoff_time = args.cutoff_time
-if not cutoff_time:
-    cutoff_time = '2021-02-06'
-
-shared = SharedGalaxy(browser='Chrome', headless=True, cutoff_time=cutoff_time)
-shared.download(args.destination, server=args.server, api_key=args.api_key)
+shared = SharedGalaxy(browser='Chrome', headless=True,
+                      cutoff_time=args.cutoff_time)
+shared.download(args.destination, server=args.server,
+                api_key=args.api_key, version=args.version)
 shared.quit()
