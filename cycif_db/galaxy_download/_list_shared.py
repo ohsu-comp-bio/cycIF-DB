@@ -25,7 +25,7 @@ class SharedGalaxy(GalaxyDriver):
     """
     def __init__(self, browser='Chrome', headless=True, server=None,
                  username=None, password=None, wait_time=10,
-                 cutoff_time='2021-01-01',
+                 cutoff_time='2021-02-06',
                  **kwargs) -> None:
         super().__init__(browser=browser, headless=headless, server=server,
                          username=username, password=password, **kwargs)

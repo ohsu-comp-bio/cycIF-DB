@@ -38,7 +38,6 @@ def download_datasets(destination, *datasets, server=None, api_key=None,
     if not gi:
         gi = galaxy_client(server=server, api_key=api_key)
     dataset_cli = galaxy.datasets.DatasetClient(gi)
-    his_cli = galaxy.histories.HistoryClient(gi)
 
     if isinstance(destination, str):
         destination = pathlib.Path(destination)
@@ -54,11 +53,9 @@ def download_datasets(destination, *datasets, server=None, api_key=None,
         dataset_cli.download_dataset(dataset_id, str(destination),
                                      use_default_filename=True)
 
-    annotation = {"server": server or gi.url[:-4]}
+    annotation = {"server": server or gi.url[:-3]}
     history_id = dataset_cli.show_dataset(dataset_id)['history_id']
-    history_username_and_slug = \
-        his_cli.show_history(history_id)['username_and_slug']
-    annotation['history_username_and_slug'] = history_username_and_slug
+    annotation['history_id'] = history_id
     annotation['datasets'] = datasets
 
     with open(destination.joinpath('annotation.txt'), 'w') as fp:
@@ -82,6 +79,11 @@ def find_markers_csv_and_quantification(his_client, history_id,
     --------
     None or tuple of dataset_ids ({quantification}, {markers_csv}).
     """
+    is_ok = his_client.get_histories(history_id, deleted=False)
+    if not is_ok:
+        log.error(f"The history `{history_id}` was deleted?")
+        return
+
     contents = his_client.show_history(history_id, contents=True,
                                        deleted=False, types=['dataset'])
     contents = [dataset for dataset in contents if dataset['state'] == 'ok']
@@ -117,7 +119,8 @@ def find_markers_csv_and_quantification(his_client, history_id,
                   if is_naivestate(dataset)]
 
     if not ns_dataset:
-        log.warn("Error: make sure the history is completed successfully! %s."
+        log.warn("Error: make sure the history runs cycif workflow and is "
+                 "completed successfully! %s."
                  % history_id)
         return
 
