@@ -118,7 +118,15 @@ class SharedGalaxy(GalaxyDriver):
             his_name = tds[0].text
             rval.append((his_name, his_id))
             # remove the popmenu
-            tds[2].click()
+            try:
+                tds[2].click()
+            except Exception:
+                header = self.driver.find_element_by_xpath('//*[@id="null-header"]')
+                self.driver.execute_script("arguments[0].scrollIntoView()", header)
+                self.driver.execute_script(
+                    "arguments[0].click();",
+                    WebDriverWait(self.driver, 20)
+                    .until(EC.element_to_be_clickable((By.XPATH, '//*[@id="null-header"]'))))
 
         return rval
 
@@ -164,7 +172,6 @@ class SharedGalaxy(GalaxyDriver):
         else:
             _func = find_markers_csv_and_quantification
         for his_name, his_id in self.get_history_names_and_ids():
-            print(_func)
             markers_and_quants = _func(his_cli, his_id, check_naive_state=6)
             if not markers_and_quants:
                 continue
